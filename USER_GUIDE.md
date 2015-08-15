@@ -68,7 +68,18 @@ pigeon在运行时会依赖以下jar包，但不是强依赖某个版本，需�
 
 本文档相关示例代码可以参考pigeon-demo模块：
 
-1、定义服务
+1、定义环境、应用名称
+
+pigeon配置：
+pigeon内部使用zookeeper作为注册中心，如未使用大众点评配置框架lion，需在应用代码resources/config/pigeon.properties里（也可以在绝对路径/data/webapps/config/pigeon.properties里）设置注册中心zookeeper地址：
+pigeon.registry.address=10.1.1.1:2181，10.1.1.2：2181，10.1.1.3：2181，10.1.1.4：2181，10.1.1.5：2181
+
+应用名称配置：
+在应用代码resources/META-INF/app.properties文件里设置
+app.name=xxx
+代表此应用名称为xxx，定义应用名称是基于规范应用的考虑
+
+2、定义服务
 
 定义服务接口: (该接口需单独打包，在服务提供方和调用方共享)
 
@@ -91,11 +102,11 @@ EchoServiceImpl.java
 			}
 		}
 
-2、服务提供者注册服务
+3、服务提供者注册服务
 
 可以选择以下两种方式之一编写代码
 
-2.1、spring方式
+3.1、spring方式
 
 Spring配置声明暴露服务：
 
@@ -125,7 +136,7 @@ Provider.java
 		}
 		}
 
-2.2、api方式
+3.2、api方式
 
 Provider.java
 
@@ -142,11 +153,11 @@ Provider.java
 
 更详细的api接口可以参考下面的api详细说明。
 
-3、服务调用者
+4、服务调用者
 
 可以选择以下两种方式之一编写代码
 
-3.1、spring方式
+4.1、spring方式
 
 通过Spring配置引用远程服务：
 
@@ -179,7 +190,7 @@ Invoker.java
 			}
 		}
 
-3.2、api方式
+4.2、api方式
 
 Invoker.java
 

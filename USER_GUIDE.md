@@ -25,9 +25,9 @@ pom依赖定义：
 		<version>2.6.0-SNAPSHOT</version>
 		</dependency>
 
-pigeon在运行时会依赖以下jar包，但不是强依赖某个版本，需要应用自行加上以下jar(版本建议高于或等于以下基础版本)：
+pigeon在运行时可能会依赖以下jar包，如果有必要，需要应用自行加上以下jar(版本建议高于或等于以下基础版本)：
 
-		<!-- 如果想接入大众点评的监控框架cat（已经开源），需增加以下依赖（pigeon-monitor-cat代码在https://github.com/wu-xiang/pigeon-monitor-cat） -->
+		<!-- 通信框架依赖，下面的cat依赖是可选的，如果不依赖cat则默认不会有监控功能，如果想接入大众点评的监控框架cat（已经开源），需增加以下依赖（pigeon-monitor-cat代码在https://github.com/wu-xiang/pigeon-monitor-cat） -->
 		<dependency>
 		<groupId>com.dianping</groupId>
 		<artifactId>pigeon-monitor-cat</artifactId>
@@ -39,7 +39,7 @@ pigeon在运行时会依赖以下jar包，但不是强依赖某个版本，需�
 		<version>1.3.6-SNAPSHOT</version>
 		</dependency>
 		
-		<!-- 如果想接入大众点评的配置框架lion(尚未开源)，需增加以下依赖（pigeon-config-lion代码在https://github.com/wu-xiang/pigeon-config-lion） -->
+		<!-- 配置框架依赖，下面的lion依赖是可选的，如果不依赖lion则会默认通过本地文件加载配置，如果想接入大众点评的配置框架lion(尚未开源)，需增加以下依赖（pigeon-config-lion代码在https://github.com/wu-xiang/pigeon-config-lion） -->
 		<dependency>
 		<groupId>com.dianping</groupId>
 		<artifactId>pigeon-config-lion</artifactId>
@@ -57,6 +57,7 @@ pigeon在运行时会依赖以下jar包，但不是强依赖某个版本，需�
 		<artifactId>spring-context</artifactId>
 		<version>2.5.6</version>
 		</dependency>
+		
 		<!-- 如果是非tomcat项目需要自行加入servlet-api的jar -->
 		<dependency>
 		<groupId>org.mortbay.jetty</groupId>

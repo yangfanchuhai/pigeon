@@ -27,7 +27,7 @@ pom依赖定义：
 
 pigeon在运行时会依赖以下jar包，但不是强依赖某个版本，需要应用自行加上以下jar(版本建议高于或等于以下基础版本)：
 
-		<!-- 如果想接入大众点评的监控框架cat（已经开源），需增加以下依赖 -->
+		<!-- 如果想接入大众点评的监控框架cat（已经开源），需增加以下依赖（pigeon-monitor-cat代码在https://github.com/wu-xiang/pigeon-monitor-cat） -->
 		<dependency>
 		<groupId>com.dianping</groupId>
 		<artifactId>pigeon-monitor-cat</artifactId>
@@ -39,7 +39,7 @@ pigeon在运行时会依赖以下jar包，但不是强依赖某个版本，需�
 		<version>1.3.6-SNAPSHOT</version>
 		</dependency>
 		
-		<!-- 如果想接入大众点评的配置框架lion(尚未开源)，需增加以下依赖 -->
+		<!-- 如果想接入大众点评的配置框架lion(尚未开源)，需增加以下依赖（pigeon-config-lion代码在https://github.com/wu-xiang/pigeon-config-lion） -->
 		<dependency>
 		<groupId>com.dianping</groupId>
 		<artifactId>pigeon-config-lion</artifactId>

@@ -36,7 +36,7 @@ pigeon在运行时会依赖以下jar包，但不是强依赖某个版本，需�
 		<dependency>
 		<groupId>com.dianping.cat</groupId>
 		<artifactId>cat-core</artifactId>
-		<version>1.3.4</version>
+		<version>1.3.6-SNAPSHOT</version>
 		</dependency>
 		
 		<!-- 如果想接入大众点评的配置框架lion(尚未开源)，需增加以下依赖 -->

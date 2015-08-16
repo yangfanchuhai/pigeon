@@ -33,6 +33,12 @@ public class ServiceFutureFactory {
 		return future;
 	}
 
+	public static <T> Future<T> getFuture(Class<T> type) {
+		Future<T> future = (Future<T>) threadFuture.get();
+		threadFuture.remove();
+		return future;
+	}
+
 	public static void setFuture(Future<?> future) {
 		threadFuture.set(future);
 	}

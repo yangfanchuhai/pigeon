@@ -12,7 +12,7 @@ import org.apache.commons.lang.builder.ToStringBuilder;
 
 public interface EchoService {
 
-	String echo(String input);
+	String echo(String msg);
 
 	long now();
 

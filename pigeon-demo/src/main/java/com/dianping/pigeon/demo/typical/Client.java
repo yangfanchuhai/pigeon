@@ -4,8 +4,11 @@
  */
 package com.dianping.pigeon.demo.typical;
 
+import java.util.concurrent.Future;
+
 import com.dianping.pigeon.container.SpringContainer;
 import com.dianping.pigeon.demo.EchoService;
+import com.dianping.pigeon.remoting.invoker.callback.ServiceFutureFactory;
 import com.dianping.pigeon.util.ContextUtils;
 
 public class Client {
@@ -29,7 +32,14 @@ public class Client {
 			try {
 				ContextUtils.putRequestContext("key1", "1");
 				System.out.println(echoService.echo("hi " + i++));
-				System.out.println("response:" + ContextUtils.getResponseContext("key1"));
+
+				// echoServiceWithFuture.echo("hi " + i++);
+				// Future<String> future =
+				// ServiceFutureFactory.getFuture(String.class);
+				// System.out.println(future.get());
+
+				// System.out.println("response:" +
+				// ContextUtils.getResponseContext("key1"));
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

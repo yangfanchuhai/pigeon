@@ -4,6 +4,8 @@
  */
 package com.dianping.pigeon.remoting.invoker.callback;
 
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.Logger;
@@ -19,7 +21,7 @@ import com.dianping.pigeon.remoting.common.monitor.SizeMonitor;
 import com.dianping.pigeon.remoting.common.util.Constants;
 import com.dianping.pigeon.remoting.invoker.util.InvokerUtils;
 
-public class ServiceFutureImpl extends CallbackFuture implements ServiceFuture {
+public class ServiceFutureImpl extends CallbackFuture implements Future {
 
 	private static final Logger logger = LoggerLoader.getLogger(ServiceFutureImpl.class);
 
@@ -39,19 +41,19 @@ public class ServiceFutureImpl extends CallbackFuture implements ServiceFuture {
 	}
 
 	@Override
-	public Object _get() throws InterruptedException {
-		return _get(this.timeout);
+	public Object get() throws InterruptedException, ExecutionException {
+		return get(this.timeout);
 	}
 
-	@Override
-	public Object _get(long timeoutMillis) throws InterruptedException {
+	public Object get(long timeoutMillis) throws java.lang.InterruptedException,
+			java.util.concurrent.ExecutionException {
 		InvocationResponse response = null;
 		if (transaction != null) {
 			transaction.addData("FutureTimeout", timeoutMillis);
 		}
 		long start = System.currentTimeMillis();
 		try {
-			response = super.get(timeoutMillis);
+			response = super.getResponse(timeoutMillis);
 			if (transaction != null) {
 				transaction.setDuration(System.currentTimeMillis() - start);
 			}
@@ -83,7 +85,7 @@ public class ServiceFutureImpl extends CallbackFuture implements ServiceFuture {
 			}
 		}
 		setResponseContext(response);
-		
+
 		if (response.getMessageType() == Constants.MESSAGE_TYPE_SERVICE) {
 			return response.getResponse();
 		} else if (response.getMessageType() == Constants.MESSAGE_TYPE_EXCEPTION) {
@@ -108,8 +110,9 @@ public class ServiceFutureImpl extends CallbackFuture implements ServiceFuture {
 	}
 
 	@Override
-	public Object _get(long timeout, TimeUnit unit) throws InterruptedException {
-		return _get(unit.toMillis(timeout));
+	public Object get(long timeout, TimeUnit unit) throws java.lang.InterruptedException,
+			java.util.concurrent.ExecutionException, java.util.concurrent.TimeoutException {
+		return get(unit.toMillis(timeout));
 	}
 
 	protected void processContext() {
@@ -128,5 +131,11 @@ public class ServiceFutureImpl extends CallbackFuture implements ServiceFuture {
 			} catch (Throwable e) {
 			}
 		}
+	}
+
+	@Override
+	public boolean cancel(boolean mayInterruptIfRunning) {
+		// TODO Auto-generated method stub
+		return false;
 	}
 }

@@ -214,7 +214,7 @@ public class CheckTask implements Runnable {
 			future.setRequest(request);
 			future.setClient(client);
 			InvokerUtils.sendRequest(client, request, future);
-			InvocationResponse response = future.get(request.getTimeout());
+			InvocationResponse response = future.getResponse(request.getTimeout());
 			return response;
 		} finally {
 			try {

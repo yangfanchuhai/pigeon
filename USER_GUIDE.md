@@ -69,7 +69,10 @@ pigeon在运行时可能会依赖以下jar包，如果有必要，需要应用�
 
 本文档相关示例代码可以参考pigeon-demo模块：
 
-1、定义环境、应用名称
+1、下载代码后，通过maven构建项目：
+mvn clean install -DskipTests
+
+2、配置环境准备
 
 pigeon配置：
 pigeon内部使用zookeeper作为注册中心，如未使用大众点评配置框架lion，需在应用代码resources/config/pigeon.properties里（也可以在绝对路径/data/webapps/config/pigeon.properties里）设置注册中心zookeeper地址：
@@ -80,7 +83,7 @@ pigeon.registry.address=10.1.1.1:2181,10.1.1.2:2181,10.1.1.3:2181,10.1.1.4:2181,
 app.name=xxx
 代表此应用名称为xxx，定义应用名称是基于规范应用的考虑
 
-2、定义服务
+3、定义服务
 
 定义服务接口: (该接口需单独打包，在服务提供方和调用方共享)
 
@@ -103,15 +106,15 @@ EchoServiceImpl.java
 			}
 		}
 
-3、服务提供者注册服务
+4、服务提供者
 
-可以选择以下两种方式之一编写代码
-
-3.1、spring方式
+这里先介绍传统spring方式，后边章节会介绍annotation方式、spring schema定义方式、api方式。
 
 Spring配置声明暴露服务：
 
 provider.xml
+services属性下的key是服务全局唯一的标识url（如果一个远程服务未特别设置，url默认是服务接口类名），value是引用的服务bean
+port属性可不指定
 
 		<bean class="com.dianping.pigeon.remoting.provider.config.spring.ServiceBean"
 		init-method="init">
@@ -121,7 +124,11 @@ provider.xml
 		value-ref="echoServiceImpl" />
 		</map>
 		</property>
+		<property name="port">
+		<value>5008</value>
+		</property>
 		</bean>
+		
 		<bean id="echoServiceImpl" class="com.dianping.pigeon.demo.provider.EchoServiceImpl" />
 		
 加载Spring配置：
@@ -137,39 +144,21 @@ Provider.java
 		}
 		}
 
-3.2、api方式
 
-Provider.java
+5、服务调用者
 
-		public class Provider {
-		public static void main(String[] args) throws Exception {
-			ServiceFactory.addService(EchoService.class, new EchoServiceImpl());
-			System.in.read(); // 按任意键退出
-		}
-		}
-		
-如需自定义端口，可以参考以下代码：
-
-		ServiceFactory.publishService("http://service.dianping.com/demoService/echoService_1.0.0", EchoService.class, new EchoServiceImpl(), 4040);
-
-更详细的api接口可以参考下面的api详细说明。
-
-4、服务调用者
-
-可以选择以下两种方式之一编写代码
-
-4.1、spring方式
+这里先介绍传统spring方式，后边章节会介绍annotation方式、spring schema定义方式、api方式。
 
 通过Spring配置引用远程服务：
 
 invoker.xml
 
 		<bean id="echoService" class="com.dianping.pigeon.remoting.invoker.config.spring.ReferenceBean" init-method="init">
-		<property name="url" value="http://service.dianping.com/demoService/echoService_1.0.0" /><!-- 服务全局唯一的标识url，必须设置 -->
+		<property name="url" value="http://service.dianping.com/demoService/echoService_1.0.0" /><!-- 服务全局唯一的标识url，默认是服务接口类名，必须设置 -->
 		<property name="interfaceName" value="com.dianping.pigeon.demo.EchoService" /><!-- 接口名称，必须设置 -->
+		<property name="timeout" value="2000" /><!-- 超时时间，毫秒，默认5000，建议自己设置 -->
 		<property name="serialize" value="hessian" /><!-- 序列化，hessian/fst/protostuff，默认hessian，可不设置-->
 		<property name="callType" value="sync" /><!-- 调用方式，sync/future/callback/oneway，默认sync，可不设置 -->
-		<property name="timeout" value="2000" /><!-- 超时时间，毫秒 -->
 		<property name="cluster" value="failfast" /><!-- 失败策略，快速失败failfast/失败转移failover/失败忽略failsafe/并发取最快返回forking，默认failfast，可不设置 -->
 		<property name="timeoutRetry" value="false" /><!-- 是否超时重试，默认false，可不设置 -->
 		<property name="retries" value="1" /><!-- 重试次数，默认1，可不设置 -->
@@ -191,35 +180,6 @@ Invoker.java
 			}
 		}
 
-4.2、api方式
-
-Invoker.java
-
-		public class Invoker {
-			public static void main(String[] args) throws Exception {
-				EchoService echoService = ServiceFactory.getService(EchoService.class); // 获取远程服务代理
-				String hello = echoService.echo("world");
-				System.out.println( hello );
-			}
-		}
-		
-注意兼容性：如果使用pigeon的api方式时需要考虑兼容性，pigeon1.x里需要在spring配置定义服务名称url，如http://service.dianping.com/demoService/echoService_1.0.0
-而api方式可以不定义这个服务名称，有的场合仍需要自定义，可以按如下代码：
-
-		EchoService echoService = ServiceFactory.getService("http://service.dianping.com/demoService/echoService_1.0.0", EchoService.class, 2000); // 获取远程服务代理
-		String hello = echoService.echo("world");
-		System.out.println( hello );
-
-如果要程序指定序列化方式或协议类型，可以参考如下代码：
-
-		InvokerConfig<EchoService> config = new InvokerConfig<EchoService>(EchoService.class);
-		config.setProtocol(InvokerConfig.PROTOCOL_DEFAULT);
-		config.setSerialize(InvokerConfig.SERIALIZE_HESSIAN);
-		EchoService service = ServiceFactory.getService(config);
-		String hello = service.echo("world");
-		System.out.println( hello );
-		
-更详细的api接口可以参考下面的api详细说明。
 
 ### annotation编程方式
 
@@ -231,7 +191,7 @@ EchoService是一个远程服务的接口：
 			String echo(String input);
 		}
 		
-在服务端需要实现这个服务接口，服务实现类上需要加上@Service：
+在服务端需要实现这个服务接口，服务实现类上需要加上@Service（com.dianping.pigeon.remoting.provider.config.annotation.Service）：
 
 		@Service
 		public class EchoServiceAnnotationImpl implements EchoService {
@@ -271,8 +231,10 @@ EchoService是一个远程服务的接口：
 假设在客户端有一个AnnotationTestService，需要引用远程的EchoService服务，只需要在field或method上加上@Reference：
 
 		public class AnnotationTestService {
+		
 		@Reference(timeout = 1000)
 		private EchoService echoService;
+		
 		public String testEcho(String input) {
 			return echoService.echo(input);
 		}
@@ -335,7 +297,7 @@ EchoService是一个远程服务的接口：
 		      interface="com.dianping.pigeon.demo.EchoService" ref="echoServiceImpl" />
 		</beans>
 
-也可以指定url和port等属性：
+也可以指定服务url（代表这个服务的唯一性标识，默认是接口类名）和port等属性：
 
 		<bean id="echoServiceImpl" class="com.dianping.pigeon.demo.provider.EchoServiceImpl" />
 		<pigeon:service id="echoService" url="http://service.dianping.com/demoService/echoService_1.0.0"
@@ -380,7 +342,7 @@ EchoService是一个远程服务的接口：
 		      callback="echoServiceCallback" />
 		</beans>
 
-也可以指定url属性：
+也可以指定服务url（代表这个服务的唯一性标识，默认是接口类名）属性：
 
 		<pigeon:reference id="echoService" url="http://service.dianping.com/demoService/echoService_1.0.0"  timeout=”1000”
 		      interface="com.dianping.pigeon.demo.EchoService" />
@@ -393,7 +355,53 @@ EchoService是一个远程服务的接口：
 
 ### api编程方式
 
-ServiceFactory接口：
+1、服务提供者
+
+Provider.java
+
+		public class Provider {
+		public static void main(String[] args) throws Exception {
+			ServiceFactory.addService(EchoService.class, new EchoServiceImpl());
+			System.in.read(); // 按任意键退出
+		}
+		}
+		
+如需自定义服务url（代表这个服务的唯一性标识，默认是接口类名）或端口等参数，可以参考以下代码：
+
+		ServiceFactory.publishService("http://service.dianping.com/demoService/echoService_1.0.0", EchoService.class, new EchoServiceImpl(), 4040);
+
+更详细的api接口可以参考ServiceFactory类的api详细说明。
+
+2、服务调用者
+
+Invoker.java
+
+		public class Invoker {
+			public static void main(String[] args) throws Exception {
+				EchoService echoService = ServiceFactory.getService(EchoService.class); // 获取远程服务代理
+				String hello = echoService.echo("world");
+				System.out.println( hello );
+			}
+		}
+		
+如果要调用的服务定义了特定的url（代表这个服务的唯一性标识，默认是接口类名），需要客户端指定服务url，可以参考如下代码：
+
+		EchoService echoService = ServiceFactory.getService("http://service.dianping.com/demoService/echoService_1.0.0", EchoService.class, 2000); // 获取远程服务代理
+		String hello = echoService.echo("world");
+		System.out.println( hello );
+
+如果要程序指定序列化方式或协议类型，可以参考如下代码：
+
+		InvokerConfig<EchoService> config = new InvokerConfig<EchoService>(EchoService.class);
+		config.setProtocol(InvokerConfig.PROTOCOL_DEFAULT);
+		config.setSerialize(InvokerConfig.SERIALIZE_HESSIAN);
+		EchoService service = ServiceFactory.getService(config);
+		String hello = service.echo("world");
+		System.out.println( hello );
+		
+更详细的api接口可以参考ServiceFactory类的api详细说明。
+
+3、ServiceFactory接口：
 
 		public static <T> T getService(Class<T> serviceInterface) throws RpcException
 		public static <T> T getService(Class<T> serviceInterface, int timeout) throws RpcException
@@ -668,7 +676,7 @@ pigeon支持服务端对某个服务接口的方法的最大并发数进行配�
 		interface="com.dianping.pigeon.demo.UserService" ref="defaultEchoServiceImpl">
 		</pigeon:service>
 		
-以上配置里actives、workQueueSize、corePoolSize、maxPoolSize，均可以通过lion动态在线设置实时生效
+以上配置里actives、workQueueSize、corePoolSize、maxPoolSize，如果使用点评的lion配置框架，均可以通过lion动态在线设置实时生效
 
 2、限制某个客户端应用的最大并发数
 pigeon也支持在服务端配置某个客户端应用的最大并发数
@@ -691,9 +699,8 @@ pigeon提供了客户端服务预热功能，当某个服务端机器重启后�
 在pigeon内部，客户端调用远程服务有4种模式（sync/future/callback/oneway），例如spring编程方式下只需要配置callType属性：
 		
 		<bean id="echoService" class="com.dianping.pigeon.remoting.invoker.config.spring.ReferenceBean" init-method="init">
-			<property name="serviceName" value="http://service.dianping.com/com.dianping.pigeon.demo.EchoService" />
+			<property name="url" value="http://service.dianping.com/com.dianping.pigeon.demo.EchoService" />
 			<property name="interfaceName" value="com.dianping.pigeon.demo.EchoService" />
-			<property name="serialize" value="hessian" />
 			<property name="callType" value="sync" />
 			<property name="timeout" value="1000" />
 		</bean>
@@ -709,23 +716,23 @@ c、future
 //调用ServiceA的method1
 serviceA.method1("aaa");
 //获取ServiceA的method1调用future状态
-ServiceFuture future1OfServiceA = ServiceFutureFactory.getFuture();
+Future future1OfServiceA = ServiceFutureFactory.getFuture();
 //调用ServiceA的method2
 serviceA.method2("bbb");
 //获取ServiceA的method2调用future状态
-ServiceFuture future2OfServiceA = ServiceFutureFactory.getFuture();
+Future future2OfServiceA = ServiceFutureFactory.getFuture();
 //调用ServiceB的method1
 serviceB.method1("ccc");
 //获取ServiceB的method1调用future状态
-ServiceFuture future1OfServiceB = ServiceFutureFactory.getFuture();
+Future future1OfServiceB = ServiceFutureFactory.getFuture();
 //获取ServiceA的method2调用结果
-Object result2OfServiceA = future2OfServiceA._get();
+Object result2OfServiceA = future2OfServiceA.get();
 //获取ServiceA的method1调用结果
-Object result1OfServiceA = future1OfServiceA._get();
+Object result1OfServiceA = future1OfServiceA.get();
 //获取ServiceB的method1调用结果
-Object result1OfServiceB = future1OfServiceB._get();
-最后的_get()调用顺序由业务自行决定，操作总共花费的时间，大致等于耗时最长的服务方法执行时间。
-除了_get();接口也可以使用_get(timeout);指定超时时间。
+Object result1OfServiceB = future1OfServiceB.get();
+最后的get()调用顺序由业务自行决定，操作总共花费的时间，大致等于耗时最长的服务方法执行时间。
+除了get();接口也可以使用get(timeout);指定超时时间。
 
 d、callback
 回调方式，客户端将请求提交给pigeon后立即返回，也不等待返回结果，它与future方式的区别是，callback必须提供一个实现了pigeon提供的ServiceCallback接口的回调对象给pigeon，pigeon负责接收返回结果并传递回给这个回调对象，代码示例：
@@ -733,10 +740,9 @@ spring配置文件：
 
 		<bean id="echoServiceWithCallback" class="com.dianping.pigeon.remoting.invoker.config.spring.ReferenceBean"
 		init-method="init">
-		<property name="serviceName"
+		<property name="url"
 		value="http://service.dianping.com/com.dianping.pigeon.demo.EchoService" />
 		<property name="interfaceName" value="com.dianping.pigeon.demo.EchoService" />
-		<property name="serialize" value="hessian" />
 		<property name="callType" value="callback" />
 		<property name="timeout" value="1000" />
 		<property name="callback" ref="echoServiceCallback" />
@@ -777,10 +783,9 @@ Callback类：
 
 		<bean id="echoService" class="com.dianping.pigeon.remoting.invoker.config.spring.ReferenceBean"
 		init-method="init">
-		<property name="serviceName"
+		<property name="url"
 		value="http://service.dianping.com/com.dianping.pigeon.demo.EchoService" />
 		<property name="interfaceName" value="com.dianping.pigeon.demo.EchoService" />
-		<property name="serialize" value="hessian" />
 		<property name="callType" value="sync" />
 		<property name="timeout" value="1000" />
 		<property name="cluster" value="failfast" /><!-- 失败策略，快速失败failfast/失败转移failover/失败忽略failsafe/并发取最快返回forking，默认failfast -->
@@ -901,7 +906,7 @@ ServiceFactory.online();
 	
 		<bean id="echoService" class="com.dianping.pigeon.remoting.invoker.config.spring.ReferenceBean"
 		init-method="init">
-			<property name="serviceName"
+			<property name="url"
 			value="http://service.dianping.com/com.dianping.pigeon.demo.EchoService" />
 			<property name="interfaceName" value="com.dianping.pigeon.demo.EchoService" />
 			<property name="callType" value="sync" />

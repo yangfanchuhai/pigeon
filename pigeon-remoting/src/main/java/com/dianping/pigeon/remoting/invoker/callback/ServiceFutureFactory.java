@@ -3,8 +3,12 @@
  */
 package com.dianping.pigeon.remoting.invoker.callback;
 
-import com.dianping.pigeon.log.LoggerLoader;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+
 import org.apache.logging.log4j.Logger;
+
+import com.dianping.pigeon.log.LoggerLoader;
 
 /**
  * <p>
@@ -21,21 +25,15 @@ import org.apache.logging.log4j.Logger;
 public class ServiceFutureFactory {
 
 	private static Logger log = LoggerLoader.getLogger(ServiceFutureFactory.class);
-	private static ThreadLocal<ServiceFuture> threadFuture = new ThreadLocal<ServiceFuture>();
+	private static ThreadLocal<Future<?>> threadFuture = new ThreadLocal<Future<?>>();
 
-	public static ServiceFuture getFuture() {
-		ServiceFuture future = threadFuture.get();
+	public static Future<?> getFuture() {
+		Future<?> future = threadFuture.get();
 		threadFuture.remove();
 		return future;
 	}
 
-	public static void setFuture(ServiceFuture future) {
-//		if (threadFuture.get() != null) {
-//			threadFuture.remove();
-//			String msg = "you must call \"ServiceFutureFactory.getFuture()\" before second call service if you use future call";
-//			log.error(msg);
-//			throw new InvalidParameterException(msg);
-//		}
+	public static void setFuture(Future<?> future) {
 		threadFuture.set(future);
 	}
 
@@ -52,9 +50,10 @@ public class ServiceFutureFactory {
 	 *            返回值类
 	 * @return 调用结果
 	 * @throws InterruptedException
+	 * @throws ExecutionException
 	 */
-	public static <T> T getResult(Class<T> res) throws InterruptedException {
-		return (T) getFuture()._get();
+	public static <T> T getResult(Class<T> res) throws InterruptedException, ExecutionException {
+		return (T) getFuture().get();
 	}
 
 	/**
@@ -62,9 +61,10 @@ public class ServiceFutureFactory {
 	 * 
 	 * @return 调用结果
 	 * @throws InterruptedException
+	 * @throws ExecutionException
 	 */
-	public static Object getResult() throws InterruptedException {
-		return getFuture()._get();
+	public static Object getResult() throws InterruptedException, ExecutionException {
+		return getFuture().get();
 	}
 
 }

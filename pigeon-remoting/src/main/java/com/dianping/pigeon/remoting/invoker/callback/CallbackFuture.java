@@ -51,11 +51,11 @@ public class CallbackFuture implements Callback, CallFuture {
 		this.response = response;
 	}
 
-	public InvocationResponse get() throws InterruptedException {
-		return get(Long.MAX_VALUE);
+	public InvocationResponse getResponse() throws InterruptedException {
+		return getResponse(Long.MAX_VALUE);
 	}
 
-	public InvocationResponse get(long timeoutMillis) throws InterruptedException {
+	public InvocationResponse getResponse(long timeoutMillis) throws InterruptedException {
 		synchronized (this) {
 			long start = request.getCreateMillisTime();
 			while (!this.done) {
@@ -110,8 +110,8 @@ public class CallbackFuture implements Callback, CallFuture {
 		}
 	}
 
-	public InvocationResponse get(long timeout, TimeUnit unit) throws InterruptedException {
-		return get(unit.toMillis(timeout));
+	public InvocationResponse getResponse(long timeout, TimeUnit unit) throws InterruptedException {
+		return getResponse(unit.toMillis(timeout));
 	}
 
 	public boolean cancel() {

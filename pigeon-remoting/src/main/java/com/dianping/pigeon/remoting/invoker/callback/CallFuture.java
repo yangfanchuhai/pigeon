@@ -10,11 +10,11 @@ import com.dianping.pigeon.remoting.common.domain.InvocationResponse;
 
 public interface CallFuture extends Call {
 
-	InvocationResponse get() throws InterruptedException;
+	InvocationResponse getResponse() throws InterruptedException;
 
-	InvocationResponse get(long timeoutMillis) throws InterruptedException;
+	InvocationResponse getResponse(long timeoutMillis) throws InterruptedException;
 
-	InvocationResponse get(long timeout, TimeUnit unit) throws InterruptedException;
+	InvocationResponse getResponse(long timeout, TimeUnit unit) throws InterruptedException;
 
 	boolean cancel();
 

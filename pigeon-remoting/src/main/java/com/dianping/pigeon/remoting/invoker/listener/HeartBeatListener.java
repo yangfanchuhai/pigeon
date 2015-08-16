@@ -201,7 +201,7 @@ public class HeartBeatListener implements Runnable, ClusterListener {
 			CallbackFuture future = new CallbackFuture();
 			response = InvokerUtils.sendRequest(client, heartRequest, future);
 			if (response == null) {
-				response = future.get(heartBeatTimeout);
+				response = future.getResponse(heartBeatTimeout);
 			}
 			if (response != null) {
 				processResponse(heartRequest, response, client);

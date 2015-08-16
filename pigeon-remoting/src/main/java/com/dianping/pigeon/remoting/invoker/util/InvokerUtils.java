@@ -2,6 +2,7 @@ package com.dianping.pigeon.remoting.invoker.util;
 
 import java.io.Serializable;
 import java.util.Map;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.logging.log4j.Logger;
@@ -18,7 +19,6 @@ import com.dianping.pigeon.remoting.common.util.TimelineUtils;
 import com.dianping.pigeon.remoting.common.util.TimelineUtils.Phase;
 import com.dianping.pigeon.remoting.invoker.Client;
 import com.dianping.pigeon.remoting.invoker.callback.Callback;
-import com.dianping.pigeon.remoting.invoker.callback.ServiceFuture;
 import com.dianping.pigeon.remoting.invoker.config.InvokerConfig;
 import com.dianping.pigeon.remoting.invoker.domain.InvokerContext;
 import com.dianping.pigeon.remoting.invoker.domain.RemoteInvocationBean;
@@ -75,7 +75,7 @@ public class InvokerUtils {
 		return new NoReturnResponse();
 	}
 
-	public static InvocationResponse createFutureResponse(ServiceFuture serviceFuture) {
+	public static InvocationResponse createFutureResponse(Future serviceFuture) {
 		FutureResponse resp = new FutureResponse();
 		resp.setServiceFuture(serviceFuture);
 		return resp;
@@ -257,13 +257,13 @@ public class InvokerUtils {
 
 		private long providerResponseTime;
 
-		private ServiceFuture serviceFuture;
+		private Future<?> serviceFuture;
 
-		public ServiceFuture getServiceFuture() {
+		public Future<?> getServiceFuture() {
 			return serviceFuture;
 		}
 
-		public void setServiceFuture(ServiceFuture serviceFuture) {
+		public void setServiceFuture(Future<?> serviceFuture) {
 			this.serviceFuture = serviceFuture;
 		}
 

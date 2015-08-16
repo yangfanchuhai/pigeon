@@ -15,6 +15,9 @@
 				<entry key="com.dianping.pigeon.demo.EchoService" value-ref="defaultEchoServiceImpl" />
 			</map>
 		</property>
+		<property name="port">
+			<value>5008</value>
+		</property>
 	</bean>
 
 	<bean id="defaultEchoServiceImpl" class="com.dianping.pigeon.demo.EchoServiceDefaultImpl" />

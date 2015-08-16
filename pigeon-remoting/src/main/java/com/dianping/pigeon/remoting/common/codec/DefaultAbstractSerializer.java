@@ -11,10 +11,10 @@ import com.dianping.pigeon.remoting.common.domain.DefaultResponse;
 import com.dianping.pigeon.remoting.common.domain.InvocationRequest;
 import com.dianping.pigeon.remoting.common.domain.InvocationResponse;
 import com.dianping.pigeon.remoting.common.exception.SerializationException;
-import com.dianping.pigeon.remoting.invoker.callback.ServiceInvocationProxy;
 import com.dianping.pigeon.remoting.invoker.config.InvokerConfig;
 import com.dianping.pigeon.remoting.invoker.domain.InvokerContext;
 import com.dianping.pigeon.remoting.invoker.process.InvokerProcessHandlerFactory;
+import com.dianping.pigeon.remoting.invoker.service.ServiceInvocationProxy;
 import com.dianping.pigeon.util.ClassUtils;
 
 /**

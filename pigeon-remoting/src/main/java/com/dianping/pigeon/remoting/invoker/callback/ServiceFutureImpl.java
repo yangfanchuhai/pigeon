@@ -7,6 +7,7 @@ package com.dianping.pigeon.remoting.invoker.callback;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.apache.logging.log4j.Logger;
 
@@ -19,6 +20,7 @@ import com.dianping.pigeon.remoting.common.exception.InvalidParameterException;
 import com.dianping.pigeon.remoting.common.exception.RpcException;
 import com.dianping.pigeon.remoting.common.monitor.SizeMonitor;
 import com.dianping.pigeon.remoting.common.util.Constants;
+import com.dianping.pigeon.remoting.invoker.exception.RequestTimeoutException;
 import com.dianping.pigeon.remoting.invoker.util.InvokerUtils;
 
 public class ServiceFutureImpl extends CallbackFuture implements Future {
@@ -42,7 +44,15 @@ public class ServiceFutureImpl extends CallbackFuture implements Future {
 
 	@Override
 	public Object get() throws InterruptedException, ExecutionException {
-		return get(this.timeout);
+		try {
+			return get(this.timeout);
+		} catch (RequestTimeoutException e) {
+			throw new ExecutionException(this.timeout + "ms timeout", e);
+		} catch (InterruptedException e) {
+			throw e;
+		} catch (Throwable e) {
+			throw new ExecutionException(e);
+		}
 	}
 
 	public Object get(long timeoutMillis) throws java.lang.InterruptedException,
@@ -112,7 +122,16 @@ public class ServiceFutureImpl extends CallbackFuture implements Future {
 	@Override
 	public Object get(long timeout, TimeUnit unit) throws java.lang.InterruptedException,
 			java.util.concurrent.ExecutionException, java.util.concurrent.TimeoutException {
-		return get(unit.toMillis(timeout));
+		long timeoutMs = unit.toMillis(timeout);
+		try {
+			return get(timeoutMs);
+		} catch (RequestTimeoutException e) {
+			throw new TimeoutException(timeoutMs + "ms timeout");
+		} catch (InterruptedException e) {
+			throw e;
+		} catch (Throwable e) {
+			throw new ExecutionException(e);
+		}
 	}
 
 	protected void processContext() {
@@ -135,7 +154,6 @@ public class ServiceFutureImpl extends CallbackFuture implements Future {
 
 	@Override
 	public boolean cancel(boolean mayInterruptIfRunning) {
-		// TODO Auto-generated method stub
-		return false;
+		return cancel();
 	}
 }

@@ -136,7 +136,7 @@ public class ProviderAvailableListener implements Runnable {
 							}
 						}
 						if (error != null) {
-							logger.warn("[provider-available] failed to get providers, caused by " + error);
+							logger.warn("[provider-available] failed to get providers, caused by:" + error);
 						}
 					}
 				}

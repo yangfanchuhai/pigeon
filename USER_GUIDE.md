@@ -184,6 +184,7 @@ Invoker.java
 ### annotation编程方式
 
 annotation方式的编程无需在spring里定义每个bean，但仍需依赖spring，具体使用方式如下：
+
 1、服务提供者
 EchoService是一个远程服务的接口：
 

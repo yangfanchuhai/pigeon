@@ -73,7 +73,9 @@ public abstract class AbstractRequestProcessor implements RequestProcessor {
 				providerContext.getChannel().write(ProviderUtils.createFailResponse(request, e));
 			}
 			logger.error(msg, e);
-			monitor.logError(msg, e);
+			if(monitor != null) {
+				monitor.logError(msg, e);
+			}
 		}
 		providerContext.setFuture(invocationResponse);
 		return invocationResponse;

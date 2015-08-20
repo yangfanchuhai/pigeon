@@ -8,7 +8,6 @@ import java.io.InputStream;
 import java.net.InetSocketAddress;
 
 import org.jboss.netty.channel.Channel;
-import org.jboss.netty.util.DebugUtil;
 
 import com.dianping.pigeon.remoting.common.codec.SerializerFactory;
 import com.dianping.pigeon.remoting.common.domain.InvocationRequest;
@@ -28,9 +27,6 @@ public class ProviderDecoder extends AbstractDecoder {
 		InvocationRequest request = (InvocationRequest) message;
 		// TIMELINE_server_received: DebugUtil.getTimestamp()
 		String remoteIp = ((InetSocketAddress) channel.getRemoteAddress()).getAddress().getHostAddress();
-		if (isNettyTimelineEnabled) {
-			TimelineUtils.time(request, remoteIp, Phase.ServerReceived, System.currentTimeMillis());
-		}
 		// TIMELINE_server_decoded
 		TimelineUtils.time(request, remoteIp, Phase.ServerDecoded);
 		request.setCreateMillisTime(receiveTime);

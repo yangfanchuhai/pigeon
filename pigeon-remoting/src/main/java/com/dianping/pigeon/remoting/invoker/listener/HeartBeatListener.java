@@ -170,7 +170,7 @@ public class HeartBeatListener implements Runnable, ClusterListener {
 								&& (RegistryManager.getInstance().getServiceWeight(client.getAddress()) > 0);
 						if (enable) {
 							if (client.isConnected()) {
-								if (NetUtils.getFirstLocalIp().equals(client.getHost())
+								if (configManager.getLocalIp().equals(client.getHost())
 										&& serverPorts.contains(client.getPort())) {
 									continue;
 								}

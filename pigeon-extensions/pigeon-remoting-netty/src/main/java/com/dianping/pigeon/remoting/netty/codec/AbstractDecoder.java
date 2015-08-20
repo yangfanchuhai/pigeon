@@ -37,8 +37,6 @@ public abstract class AbstractDecoder extends OneToOneDecoder implements Decoder
 
 	public abstract Object deserialize(byte serializerType, InputStream is);
 
-	protected boolean isNettyTimelineEnabled = true;
-
 	public AbstractDecoder() {
 	}
 

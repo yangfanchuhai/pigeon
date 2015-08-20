@@ -60,8 +60,6 @@ public class NettyClient extends AbstractClient {
 
 	public static final int CLIENT_CONNECTIONS = Runtime.getRuntime().availableProcessors();
 
-	private long logCount;
-
 	private static ConfigManager configManager = ConfigManagerLoader.getConfigManager();
 
 	private static ExecutorService bossExecutor = Executors.newCachedThreadPool(new DefaultThreadFactory(

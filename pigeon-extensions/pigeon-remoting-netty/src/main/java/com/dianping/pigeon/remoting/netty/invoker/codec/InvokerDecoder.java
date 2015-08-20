@@ -22,11 +22,6 @@ public class InvokerDecoder extends AbstractDecoder {
 
 	@Override
 	public Object doInitMsg(Object message, Channel channel, long receiveTime) {
-		// TIMELINE_client_received: DebugUtil.getTimestamp()
-		if (isNettyTimelineEnabled) {
-			TimelineUtils.time((InvocationSerializable) message, TimelineUtils.getLocalIp(), Phase.ClientReceived,
-					System.currentTimeMillis());
-		}
 		// TIMELINE_client_decoded
 		TimelineUtils.time((InvocationSerializable) message, TimelineUtils.getLocalIp(), Phase.ClientDecoded);
 		return message;

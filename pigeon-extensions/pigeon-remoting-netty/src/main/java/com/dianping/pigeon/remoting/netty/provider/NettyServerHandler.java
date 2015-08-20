@@ -6,7 +6,6 @@ package com.dianping.pigeon.remoting.netty.provider;
 
 import java.util.List;
 
-import com.dianping.pigeon.log.LoggerLoader;
 import org.apache.logging.log4j.Logger;
 import org.jboss.netty.channel.ChannelEvent;
 import org.jboss.netty.channel.ChannelHandlerContext;
@@ -16,6 +15,7 @@ import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 
+import com.dianping.pigeon.log.LoggerLoader;
 import com.dianping.pigeon.remoting.common.domain.InvocationRequest;
 import com.dianping.pigeon.remoting.common.util.Constants;
 import com.dianping.pigeon.remoting.provider.domain.DefaultProviderContext;
@@ -42,19 +42,9 @@ public class NettyServerHandler extends SimpleChannelUpstreamHandler {
 		super.handleUpstream(ctx, e);
 	}
 
-	/**
-	 * 服务器端接受到消息
-	 * 
-	 * @see org.jboss.netty.channel.SimpleChannelUpstreamHandler#messageReceived(org.jboss.netty.channel.ChannelHandlerContext,
-	 *      org.jboss.netty.channel.MessageEvent)
-	 */
-	@SuppressWarnings("unchecked")
 	@Override
 	public void messageReceived(ChannelHandlerContext ctx, MessageEvent message) {
 		List<InvocationRequest> messages = (List<InvocationRequest>) (message.getMessage());
-		// System.out.println("messages:" + messages.size());
-		// NioSocketChannelConfig config = ((NioSocketChannelConfig)
-		// ctx.getChannel().getConfig());
 		for (InvocationRequest request : messages) {
 			ProviderContext invocationContext = new DefaultProviderContext(request, new NettyChannel(ctx.getChannel()));
 			try {

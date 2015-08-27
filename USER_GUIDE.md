@@ -80,17 +80,25 @@ mvn clean install -DskipTests
 2、配置环境准备
 
 pigeon配置：
+
 pigeon内部使用zookeeper作为注册中心，如未使用大众点评配置框架lion，需在应用代码resources/config/pigeon.properties里（也可以在绝对路径/data/webapps/config/pigeon.properties里）设置注册中心zookeeper地址：
+
 pigeon.registry.address=10.1.1.1:2181,10.1.1.2:2181,10.1.1.3:2181,10.1.1.4:2181,10.1.1.5:2181
 
 配置摘除服务的脚本：
+
 由于pigeon内部是在zookeeper里使用持久化节点，如果非正常关闭jvm，不会从zookeeper集群里摘除相应的本机服务的ip、port，需要在关闭jvm脚本里（比如tomcat的shutdown.sh脚本）加入以下调用：
+
 /usr/bin/curl -s --connect-timeout 5  --speed-time 6 --speed-limit 1 "http://127.0.0.1:4080/services.unpublish"
+
 该脚本内部会等待3秒，如果成功会返回ok，等该脚本执行成功再关闭jvm
 
 应用名称配置：
+
 在应用代码resources/META-INF/app.properties文件里设置
+
 app.name=xxx
+
 代表此应用名称为xxx，定义应用名称是基于规范应用的考虑
 
 

@@ -112,12 +112,12 @@ public final class Constants {
 	public static final String KEY_WEIGHT_STARTDELAY = "pigeon.weight.startdelay";
 
 	public static final int DEFAULT_INVOKER_TIMEOUT = 5000;
-	public static final int DEFAULT_PROVIDER_COREPOOLSIZE = 150;
+	public static final int DEFAULT_PROVIDER_COREPOOLSIZE = 60;
 	public static final int DEFAULT_PROVIDER_MAXPOOLSIZE = 500;
-	public static final int DEFAULT_PROVIDER_WORKQUEUESIZE = 300;
-	public static final int DEFAULT_RESPONSE_COREPOOLSIZE = 30;
-	public static final int DEFAULT_RESPONSE_MAXPOOLSIZE = 300;
-	public static final int DEFAULT_RESPONSE_WORKQUEUESIZE = 200;
+	public static final int DEFAULT_PROVIDER_WORKQUEUESIZE = 1000;
+	public static final int DEFAULT_RESPONSE_COREPOOLSIZE = 10;
+	public static final int DEFAULT_RESPONSE_MAXPOOLSIZE = 100;
+	public static final int DEFAULT_RESPONSE_WORKQUEUESIZE = 800;
 	public static final long DEFAULT_RECONNECT_INTERVAL = 5000;
 	public static final long DEFAULT_HEARTBEAT_INTERVAL = 3000;
 	public static final int DEFAULT_HEARTBEAT_TIMEOUT = 3000;
@@ -183,15 +183,12 @@ public final class Constants {
 			"pigeon.invoker.retry.networkexception", true);
 
 	public static final boolean LOG_PARAMETERS = ConfigManagerLoader.getConfigManager().getBooleanValue(
-			"pigeon.log.parameters", true);
+			"pigeon.log.parameters", false);
 
 	public static final String KEY_SERVICE_COREPOOLSIZE = "pigeon.provider.service.corePoolSize";
 	public static final String KEY_SERVICE_MAXPOOLSIZE = "pigeon.provider.service.maxPoolSize";
 	public static final String KEY_SERVICE_WORKQUEUESIZE = "pigeon.provider.service.workQueueSize";
 	public static final String KEY_SERVICE_SHARED = "pigeon.provider.service.shared";
-	public static final int DEFAULT_SERVICE_COREPOOLSIZE = 20;
-	public static final int DEFAULT_SERVICE_MAXPOOLSIZE = 50;
-	public static final int DEFAULT_SERVICE_WORKQUEUESIZE = 50;
 	public static final boolean DEFAULT_SERVICE_SHARED = true;
 
 	public static final String CONTEXT_KEY_CLIENT_IP = "CLIENT_IP";

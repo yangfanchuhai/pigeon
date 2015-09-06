@@ -104,7 +104,7 @@ public final class Constants {
 	public static final String KEY_WRITE_BUFFER_HIGH_WATER = "pigeon.channel.writebuff.high";
 	public static final String KEY_WRITE_BUFFER_LOW_WATER = "pigeon.channel.writebuff.low";
 	public static final String KEY_DEFAULT_WRITE_BUFF_LIMIT = "pigeon.channel.writebuff.defaultlimit";
-	public static final String KEY_MANAGER_ADDRESS = "pigeon.manager.address.prefix";
+	public static final String KEY_MANAGER_ADDRESS = "pigeon.manager.address";
 	public static final String KEY_NOTIFY_ENABLE = "pigeon.notify.enable";
 	public static final String KEY_TEST_ENABLE = "pigeon.test.enable";
 	public static final String KEY_CONNECT_TIMEOUT = "pigeon.netty.connecttimeout";
@@ -129,7 +129,7 @@ public final class Constants {
 	public static final boolean DEFAULT_WRITE_BUFF_LIMIT = false;
 	public static final String DEFAULT_PROCESS_TYPE = "threadpool";
 	public static final long DEFAULT_TIMEOUT_INTERVAL = 1000;
-	public static final String DEFAULT_MANAGER_ADDRESS = "lionapi.dp:8080/service/";
+	public static final String DEFAULT_MANAGER_ADDRESS = "lionapi.dp:8080";
 	public static final boolean DEFAULT_NOTIFY_ENABLE = true;
 	public static final boolean DEFAULT_TEST_ENABLE = true;
 	public static final int DEFAULT_CONNECT_TIMEOUT = 2000;
@@ -139,7 +139,7 @@ public final class Constants {
 	public static final String PROTOCOL_HTTP = "http";
 	public static final String PROTOCOL_DEFAULT = "default";
 	public static final String KEY_UNPUBLISH_WAITTIME = "pigeon.unpublish.waittime";
-	public static final int DEFAULT_UNPUBLISH_WAITTIME = 3000;
+	public static final int DEFAULT_UNPUBLISH_WAITTIME = 5000;
 	public static final String KEY_ONLINE_WHILE_INITIALIZED = "pigeon.online.whileinitialized";
 	public static final boolean DEFAULT_ONLINE_WHILE_INITIALIZED = false;
 	public static final boolean DEFAULT_TIMEOUT_CANCEL = false;
@@ -152,8 +152,6 @@ public final class Constants {
 	public static final String KEY_ONLINE_AUTO = "pigeon.online.auto";
 	public static final String KEY_WEIGHT_INITIAL = "pigeon.weight.initial";
 	public static final int DEFAULT_WEIGHT_INITIAL = 0;
-	public static final String KEY_WEIGHT_START = "pigeon.weight.start";
-	public static final int DEFAULT_WEIGHT_START = 1;
 	public static final String KEY_WEIGHT_DEFAULT = "pigeon.weight.default";
 	public static final int DEFAULT_WEIGHT_DEFAULT = 1;
 	public static final String KEY_SERVICEWARMUP_ENABLE = "pigeon.servicewarmup.enable";
@@ -163,9 +161,6 @@ public final class Constants {
 
 	public static final int WEIGHT_INITIAL = ConfigManagerLoader.getConfigManager().getIntValue(
 			Constants.KEY_WEIGHT_INITIAL, Constants.DEFAULT_WEIGHT_INITIAL);
-
-	public static final int WEIGHT_START = ConfigManagerLoader.getConfigManager().getIntValue(
-			Constants.KEY_WEIGHT_START, Constants.DEFAULT_WEIGHT_START);
 
 	public static final int WEIGHT_DEFAULT = ConfigManagerLoader.getConfigManager().getIntValue(
 			Constants.KEY_WEIGHT_DEFAULT, Constants.DEFAULT_WEIGHT_DEFAULT);

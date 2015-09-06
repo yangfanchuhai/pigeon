@@ -38,11 +38,8 @@ public class CuratorRegistry implements Registry {
 		if (!inited) {
 			synchronized (this) {
 				if (!inited) {
-					String zkAddress = properties.getProperty(Constants.KEY_REGISTRY_ADDRESS);
-					if (StringUtils.isBlank(zkAddress)) {
-						throw new IllegalArgumentException("the config 'pigeon.registry.address' is undefined");
-					}
 					try {
+						String zkAddress = properties.getProperty(Constants.KEY_REGISTRY_ADDRESS);
 						logger.info("start to initialize zookeeper client:" + zkAddress);
 						client = new CuratorClient(zkAddress);
 						logger.info("succeed to initialize zookeeper client:" + zkAddress);
@@ -124,6 +121,9 @@ public class CuratorRegistry implements Registry {
 		String weightPath = Utils.getWeightPath(serviceAddress);
 		String servicePath = Utils.getServicePath(serviceName, group);
 		try {
+			if (weight >= 0) {
+				client.set(weightPath, "" + weight);
+			}
 			if (client.exists(servicePath, false)) {
 				String addressValue = client.get(servicePath, false);
 				String[] addressArray = addressValue.split(",");
@@ -142,14 +142,11 @@ public class CuratorRegistry implements Registry {
 			} else {
 				client.create(servicePath, serviceAddress);
 			}
-			if (weight >= 0) {
-				client.set(weightPath, "" + weight);
-			}
 			if (logger.isInfoEnabled()) {
 				logger.info("registered service to persistent node: " + servicePath);
 			}
 		} catch (Throwable e) {
-			logger.error("failed to register service '" + servicePath + "' to registry " + this.toString(), e);
+			logger.error("failed to register service to " + servicePath, e);
 			throw new RegistryException(e);
 		}
 	}
@@ -206,7 +203,7 @@ public class CuratorRegistry implements Registry {
 				}
 			}
 		} catch (Throwable e) {
-			logger.error("failed to unregister service '" + servicePath + "' from registry " + this.toString(), e);
+			logger.error("failed to unregister service from " + servicePath, e);
 			throw new RegistryException(e);
 		}
 	}
@@ -338,9 +335,5 @@ public class CuratorRegistry implements Registry {
 	@Override
 	public String getStatistics() {
 		return "curator:" + client.getStatistics();
-	}
-
-	public String toString() {
-		return "" + this.client;
 	}
 }

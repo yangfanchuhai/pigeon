@@ -148,11 +148,11 @@ public class ServiceFactory {
 				throw new RpcException("error while trying to get service:" + invokerConfig, t);
 			}
 			try {
-				ClientManager.getInstance().registerServiceInvokers(invokerConfig.getUrl(), invokerConfig.getGroup(),
+				ClientManager.getInstance().registerClients(invokerConfig.getUrl(), invokerConfig.getGroup(),
 						invokerConfig.getVip());
 			} catch (Throwable t) {
 				try {
-					ClientManager.getInstance().registerServiceInvokers(invokerConfig.getUrl(),
+					ClientManager.getInstance().registerClients(invokerConfig.getUrl(),
 							invokerConfig.getGroup(), invokerConfig.getVip());
 				} catch (Throwable t2) {
 					logger.warn("error while trying to setup service client:" + invokerConfig, t2);

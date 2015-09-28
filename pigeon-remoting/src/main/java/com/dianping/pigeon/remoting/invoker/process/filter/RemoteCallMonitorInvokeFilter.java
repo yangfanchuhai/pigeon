@@ -4,6 +4,7 @@
  */
 package com.dianping.pigeon.remoting.invoker.process.filter;
 
+import java.util.Calendar;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -25,8 +26,6 @@ import com.dianping.pigeon.remoting.common.monitor.SizeMonitor;
 import com.dianping.pigeon.remoting.common.process.ServiceInvocationHandler;
 import com.dianping.pigeon.remoting.common.util.Constants;
 import com.dianping.pigeon.remoting.common.util.InvocationUtils;
-import com.dianping.pigeon.remoting.common.util.TimelineUtils;
-import com.dianping.pigeon.remoting.common.util.TimelineUtils.Timeline;
 import com.dianping.pigeon.remoting.invoker.Client;
 import com.dianping.pigeon.remoting.invoker.config.InvokerConfig;
 import com.dianping.pigeon.remoting.invoker.domain.InvokerContext;
@@ -36,7 +35,7 @@ public class RemoteCallMonitorInvokeFilter extends InvocationInvokeFilter {
 
 	private static final Logger logger = LoggerLoader.getLogger(RemoteCallMonitorInvokeFilter.class);
 
-	private static final Monitor monitor = MonitorLoader.getMonitor();
+	private Monitor monitor = MonitorLoader.getMonitor();
 
 	private static Map<String, Integer> appLogTimeoutPeriodMap = new ConcurrentHashMap<String, Integer>();
 
@@ -121,7 +120,10 @@ public class RemoteCallMonitorInvokeFilter extends InvocationInvokeFilter {
 					Client client = invocationContext.getClient();
 					targetApp = RegistryManager.getInstance().getServerApp(client.getAddress());
 					monitor.logEvent("PigeonCall.app", targetApp, "");
-
+					monitor.logEvent("PigeonCall.QPS", "S" + Calendar.getInstance().get(Calendar.SECOND), "");
+					if (Constants.LOG_INVOKER_TIMEOUT) {
+						monitor.logEvent("PigeonCall.timeout", invokerConfig.getTimeout() + "", "");
+					}
 					String parameters = "";
 					if (Constants.LOG_PARAMETERS) {
 						parameters = InvocationUtils.toJsonString(request.getParameters(), 1000, 50);
@@ -189,10 +191,6 @@ public class RemoteCallMonitorInvokeFilter extends InvocationInvokeFilter {
 		} finally {
 			if (transaction != null) {
 				try {
-					if (TimelineUtils.isEnabled()) {
-						Timeline timeline = TimelineUtils.getTimeline(request, TimelineUtils.getLocalIp());
-						transaction.addData("Timeline", timeline);
-					}
 					if (!Constants.CALL_FUTURE.equals(invokerConfig.getCallType()) || error) {
 						transaction.complete();
 					}

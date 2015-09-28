@@ -5,6 +5,7 @@
 package com.dianping.pigeon.remoting.provider.process.filter;
 
 import java.io.Serializable;
+import java.util.Calendar;
 import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
@@ -23,8 +24,6 @@ import com.dianping.pigeon.remoting.common.process.ServiceInvocationFilter;
 import com.dianping.pigeon.remoting.common.process.ServiceInvocationHandler;
 import com.dianping.pigeon.remoting.common.util.Constants;
 import com.dianping.pigeon.remoting.common.util.InvocationUtils;
-import com.dianping.pigeon.remoting.common.util.TimelineUtils;
-import com.dianping.pigeon.remoting.common.util.TimelineUtils.Timeline;
 import com.dianping.pigeon.remoting.provider.domain.ProviderChannel;
 import com.dianping.pigeon.remoting.provider.domain.ProviderContext;
 import com.dianping.pigeon.remoting.provider.service.method.ServiceMethod;
@@ -76,8 +75,9 @@ public class MonitorProcessFilter implements ServiceInvocationFilter<ProviderCon
 					parameters = event.toString();
 				}
 				monitor.logEvent("PigeonService.client", fromIp, parameters);
+				monitor.logEvent("PigeonService.QPS", "S" + Calendar.getInstance().get(Calendar.SECOND), "");
 				SizeMonitor.getInstance().logSize(request.getSize(), "PigeonService.requestSize", null);
-				if (transaction != null && !Constants.PROTOCOL_DEFAULT.equals(channel.getProtocol())) {
+				if (!Constants.PROTOCOL_DEFAULT.equals(channel.getProtocol())) {
 					transaction.addData("Protocol", channel.getProtocol());
 				}
 				ContextUtils.putLocalContext("CurrentServiceUrl",
@@ -98,7 +98,9 @@ public class MonitorProcessFilter implements ServiceInvocationFilter<ProviderCon
 						monitor.logMonitorError(e2);
 					}
 				}
-				monitor.logError(e);
+				if (monitor != null) {
+					monitor.logError(e);
+				}
 			}
 			if (transaction != null) {
 				try {
@@ -128,15 +130,11 @@ public class MonitorProcessFilter implements ServiceInvocationFilter<ProviderCon
 				}
 			}
 		} finally {
-			if (invocationContext.getServiceError() != null) {
+			if (invocationContext.getServiceError() != null && monitor != null) {
 				monitor.logError(invocationContext.getServiceError());
 			}
 			if (transaction != null) {
 				try {
-					if (TimelineUtils.isEnabled()) {
-						Timeline timeline = TimelineUtils.tryRemoveTimeline(request, TimelineUtils.getRemoteIp());
-						transaction.addData("Timeline", timeline);
-					}
 					transaction.complete();
 					if (isAccessLogEnabled) {
 						accessLogger.info(new StringBuilder().append(request.getApp()).append("@").append(fromIp)

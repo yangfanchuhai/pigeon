@@ -5,7 +5,7 @@
 	<groupId>com.dianping</groupId>
 	<artifactId>pigeon-parent</artifactId>
 	<packaging>pom</packaging>
-	<version>2.6.0-SNAPSHOT</version>
+	<version>2.7.0-SNAPSHOT</version>
 	<name>pigeon-parent</name>
 	<organization>
 		<name>dianping</name>
@@ -58,6 +58,14 @@
 		<developer>
 			<id>xiang.wu</id>
 			<name>xiang.wu</name>
+			<organization>dianping</organization>
+			<roles>
+				<role>Committer</role>
+			</roles>
+		</developer>
+		<developer>
+			<id>chongze.chen</id>
+			<name>chongze.chen</name>
 			<organization>dianping</organization>
 			<roles>
 				<role>Committer</role>
@@ -148,7 +156,7 @@
 			<dependency>
 				<groupId>org.apache.zookeeper</groupId>
 				<artifactId>zookeeper</artifactId>
-				<version>3.4.5</version>
+				<version>3.4.6</version>
 			</dependency>
 			<dependency>
 				<groupId>com.fasterxml.jackson.core</groupId>

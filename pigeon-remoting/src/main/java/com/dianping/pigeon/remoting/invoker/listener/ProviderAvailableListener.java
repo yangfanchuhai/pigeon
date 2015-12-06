@@ -20,7 +20,6 @@ import com.dianping.pigeon.domain.HostInfo;
 import com.dianping.pigeon.log.LoggerLoader;
 import com.dianping.pigeon.registry.Registry;
 import com.dianping.pigeon.registry.RegistryManager;
-import com.dianping.pigeon.registry.util.Constants;
 import com.dianping.pigeon.remoting.ServiceFactory;
 import com.dianping.pigeon.remoting.invoker.Client;
 import com.dianping.pigeon.remoting.invoker.ClientManager;
@@ -38,8 +37,6 @@ public class ProviderAvailableListener implements Runnable {
 
 	private static int providerAvailableLeast = configManager.getIntValue("pigeon.providerlistener.availableleast", 1);
 
-	private static String ignoredServices = configManager.getStringValue("pigeon.providerlistener.ignoredservices", "");
-
 	public ProviderAvailableListener() {
 		configManager.registerConfigChangeListener(new InnerConfigChangeListener());
 	}
@@ -56,11 +53,6 @@ public class ProviderAvailableListener implements Runnable {
 			} else if (key.endsWith("pigeon.providerlistener.interval")) {
 				try {
 					interval = Long.valueOf(value);
-				} catch (RuntimeException e) {
-				}
-			} else if (key.endsWith("pigeon.providerlistener.ignoredservices")) {
-				try {
-					ignoredServices = value;
 				} catch (RuntimeException e) {
 				}
 			}
@@ -93,10 +85,10 @@ public class ProviderAvailableListener implements Runnable {
 
 	public void run() {
 		long sleepTime = interval;
+		int checkCount = 0;
 		while (!Thread.currentThread().isInterrupted()) {
 			try {
 				Thread.sleep(sleepTime);
-
 				try {
 					checkReferencedServices();
 				} catch (Throwable e) {
@@ -114,9 +106,6 @@ public class ProviderAvailableListener implements Runnable {
 				}
 				long now = System.currentTimeMillis();
 				for (String url : serviceGroupMap.keySet()) {
-					if (StringUtils.isNotBlank(ignoredServices) && ignoredServices.indexOf(url) != -1) {
-						continue;
-					}
 					String groupValue = serviceGroupMap.get(url);
 					String group = groupValue.substring(0, groupValue.lastIndexOf("#"));
 					String vip = groupValue.substring(groupValue.lastIndexOf("#") + 1);
@@ -133,24 +122,31 @@ public class ProviderAvailableListener implements Runnable {
 						} catch (Throwable e) {
 							error = e.getMessage();
 						}
-						if (StringUtils.isNotBlank(group)) {
-							available = getAvailableClients(this.getWorkingClients().get(url));
-							if (available < providerAvailableLeast) {
-								logger.info("check provider available with default group for service:" + url);
-								try {
-									ClientManager.getInstance().registerClients(url, Constants.DEFAULT_GROUP,
-											vip);
-								} catch (Throwable e) {
-									error = e.getMessage();
-								}
-							}
-						}
+						// if (StringUtils.isNotBlank(group)) {
+						// available =
+						// getAvailableClients(this.getWorkingClients().get(url));
+						// if (available < providerAvailableLeast) {
+						// logger.info("check provider available with default group for service:"
+						// + url);
+						// try {
+						// ClientManager.getInstance().registerClients(url,
+						// Constants.DEFAULT_GROUP, vip);
+						// } catch (Throwable e) {
+						// error = e.getMessage();
+						// }
+						// }
+						// }
 						if (error != null) {
-							logger.warn("[provider-available] failed to get providers, caused by " + error);
+							logger.warn("[provider-available] failed to get providers, caused by:" + error);
 						}
 					}
 				}
 				sleepTime = interval - (System.currentTimeMillis() - now);
+				
+				// close register thread pool
+				if (++checkCount > 0) {
+					ClientManager.getInstance().closeRegisterThreadPool();
+				}
 			} catch (Throwable e) {
 				logger.info("[provider-available] task failed:", e);
 			} finally {
@@ -172,11 +168,13 @@ public class ProviderAvailableListener implements Runnable {
 						String app = registry.getServerApp(host.getConnect());
 						logger.info("set " + host.getConnect() + "'s app to " + app);
 						host.setApp(app);
+						RegistryManager.getInstance().setReferencedApp(host.getConnect(), app);
 					}
 					if (host.getVersion() == null) {
 						String version = registry.getServerVersion(host.getConnect());
 						logger.info("set " + host.getConnect() + "'s version to " + version);
 						host.setVersion(version);
+						RegistryManager.getInstance().setReferencedVersion(host.getConnect(), version);
 					}
 				}
 			}

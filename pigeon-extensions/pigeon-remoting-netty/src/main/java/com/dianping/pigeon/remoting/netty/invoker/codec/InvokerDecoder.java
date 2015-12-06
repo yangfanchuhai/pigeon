@@ -13,17 +13,17 @@ import org.jboss.netty.channel.Channels;
 
 import com.dianping.pigeon.remoting.common.codec.SerializerFactory;
 import com.dianping.pigeon.remoting.common.domain.InvocationResponse;
-import com.dianping.pigeon.remoting.common.domain.InvocationSerializable;
-import com.dianping.pigeon.remoting.common.util.TimelineUtils;
-import com.dianping.pigeon.remoting.common.util.TimelineUtils.Phase;
 import com.dianping.pigeon.remoting.netty.codec.AbstractDecoder;
 
 public class InvokerDecoder extends AbstractDecoder {
 
 	@Override
 	public Object doInitMsg(Object message, Channel channel, long receiveTime) {
-		// TIMELINE_client_decoded
-		TimelineUtils.time((InvocationSerializable) message, TimelineUtils.getLocalIp(), Phase.ClientDecoded);
+		if(message instanceof InvocationResponse) {
+			InvocationResponse response = (InvocationResponse) message;
+			response.setCreateMillisTime(receiveTime);
+			return response;
+		}
 		return message;
 	}
 

@@ -4,16 +4,14 @@
  */
 package com.dianping.pigeon.remoting.invoker.listener;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
-import com.dianping.pigeon.log.LoggerLoader;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.apache.logging.log4j.Logger;
 import org.springframework.util.CollectionUtils;
 
+import com.dianping.pigeon.log.LoggerLoader;
 import com.dianping.pigeon.registry.listener.RegistryEventListener;
 import com.dianping.pigeon.registry.listener.ServiceProviderChangeEvent;
 import com.dianping.pigeon.registry.listener.ServiceProviderChangeListener;
@@ -27,11 +25,11 @@ public class ClusterListenerManager implements Disposable {
 
 	public static final String PLACEHOLDER = ":";
 
-	private List<ClusterListener> listeners = new ArrayList<ClusterListener>();
+	private List<ClusterListener> listeners = new CopyOnWriteArrayList<ClusterListener>();
 
 	private ServiceProviderChangeListener providerChangeListener = new InnerServiceProviderChangeListener();
 
-	private Map<String, ConnectInfo> connectInfoMap = new ConcurrentHashMap<String, ConnectInfo>();
+	private ConcurrentHashMap<String, ConnectInfo> connectInfoMap = new ConcurrentHashMap<String, ConnectInfo>();
 
 	private static ClusterListenerManager instance = new ClusterListenerManager();
 
@@ -43,11 +41,15 @@ public class ClusterListenerManager implements Disposable {
 		RegistryEventListener.addListener(providerChangeListener);
 	}
 
-	public synchronized void addConnect(ConnectInfo cmd) {
+	public void addConnect(ConnectInfo cmd) {
 		ConnectInfo connectInfo = this.connectInfoMap.get(cmd.getConnect());
 		if (connectInfo == null) {
-			this.connectInfoMap.put(cmd.getConnect(), cmd);
-		} else {
+			ConnectInfo oldConnectInfo = this.connectInfoMap.putIfAbsent(cmd.getConnect(), cmd);
+			if (oldConnectInfo != null) {
+				connectInfo = oldConnectInfo;
+			}
+		}
+		if (connectInfo != null) {
 			connectInfo.addServiceNames(cmd.getServiceNames());
 			if (CollectionUtils.isEmpty(cmd.getServiceNames())) {
 				if (logger.isInfoEnabled()) {
@@ -61,7 +63,7 @@ public class ClusterListenerManager implements Disposable {
 		}
 	}
 
-	public synchronized void removeConnect(Client client) {
+	public void removeConnect(Client client) {
 		String connect = client.getConnectInfo().getConnect();
 		ConnectInfo cmd = this.connectInfoMap.get(connect);
 		if (cmd != null) {

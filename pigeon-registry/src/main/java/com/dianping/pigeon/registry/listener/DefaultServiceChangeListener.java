@@ -1,14 +1,14 @@
 package com.dianping.pigeon.registry.listener;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
-import com.dianping.pigeon.log.LoggerLoader;
 import org.apache.logging.log4j.Logger;
 
 import com.dianping.pigeon.domain.HostInfo;
+import com.dianping.pigeon.log.LoggerLoader;
 import com.dianping.pigeon.registry.RegistryManager;
 import com.dianping.pigeon.registry.util.Utils;
 
@@ -20,7 +20,7 @@ public class DefaultServiceChangeListener implements ServiceChangeListener {
 	}
 
 	@Override
-	public synchronized void onServiceHostChange(String serviceName, List<String[]> hostList) {
+	public void onServiceHostChange(String serviceName, List<String[]> hostList) {
 		try {
 			Set<HostInfo> newHpSet = parseHostPortList(serviceName, hostList);
 			Set<HostInfo> oldHpSet = RegistryManager.getInstance().getReferencedServiceAddresses(serviceName);
@@ -29,9 +29,11 @@ public class DefaultServiceChangeListener implements ServiceChangeListener {
 			if (oldHpSet == null) {
 				toAddHpSet = newHpSet;
 			} else {
-				toRemoveHpSet = new HashSet<HostInfo>(oldHpSet);
+				toRemoveHpSet = Collections.newSetFromMap(new ConcurrentHashMap<HostInfo,Boolean>());
+				toRemoveHpSet.addAll(oldHpSet);
 				toRemoveHpSet.removeAll(newHpSet);
-				toAddHpSet = new HashSet<HostInfo>(newHpSet);
+				toAddHpSet = Collections.newSetFromMap(new ConcurrentHashMap<HostInfo,Boolean>());
+				toAddHpSet.addAll(newHpSet);
 				toAddHpSet.removeAll(oldHpSet);
 			}
 			if (logger.isInfoEnabled()) {
@@ -51,7 +53,7 @@ public class DefaultServiceChangeListener implements ServiceChangeListener {
 	}
 
 	private Set<HostInfo> parseHostPortList(String serviceName, List<String[]> hostList) {
-		Set<HostInfo> hpSet = new HashSet<HostInfo>();
+		Set<HostInfo> hpSet = Collections.newSetFromMap(new ConcurrentHashMap<HostInfo,Boolean>());
 		if (hostList != null) {
 			for (String[] parts : hostList) {
 				String host = parts[0];
@@ -66,7 +68,7 @@ public class DefaultServiceChangeListener implements ServiceChangeListener {
 	}
 
 	@Override
-	public synchronized void onHostWeightChange(String connect, int weight) {
+	public void onHostWeightChange(String connect, int weight) {
 		HostInfo hostInfo = Utils.parseHost(connect, weight);
 		if (hostInfo != null) {
 			RegistryEventListener.hostWeightChanged(hostInfo.getHost(), hostInfo.getPort(), weight);

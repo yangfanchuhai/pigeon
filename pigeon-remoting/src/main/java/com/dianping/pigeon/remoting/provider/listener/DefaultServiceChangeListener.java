@@ -58,13 +58,13 @@ public class DefaultServiceChangeListener implements ServiceChangeListener {
 	@Override
 	public synchronized void notifyServicePublished(ProviderConfig<?> providerConfig) {
 		logger.info("start to notify service published:" + providerConfig);
-		notifyServiceChange("publish", providerConfig);
+		notifyServiceChange("publish", null, providerConfig);
 		logger.info("succeed to notify service published:" + providerConfig);
 	}
 
-	public synchronized void notifyServiceChange(String action, ProviderConfig<?> providerConfig) {
+	public synchronized void notifyServiceChange(String action, String op, ProviderConfig<?> providerConfig) {
 		String managerAddress = configManager.getStringValue("pigeon.governor.notify.address",
-				"http://lionapi.dp:8080/service/");
+				"http://pigeon.dp:8080/service/");
 		String env = providerConfig.getServerConfig().getEnv();
 		if (StringUtils.isBlank(env)) {
 			env = configManager.getEnv();
@@ -86,6 +86,9 @@ public class DefaultServiceChangeListener implements ServiceChangeListener {
 		url.append("&port=").append(providerConfig.getServerConfig().getActualPort());
 		if (StringUtils.isNotBlank(configManager.getAppName())) {
 			url.append("&app=").append(configManager.getAppName());
+		}
+		if (StringUtils.isNotBlank(op)) {
+			url.append("&op=").append(op);
 		}
 
 		try {
@@ -118,7 +121,6 @@ public class DefaultServiceChangeListener implements ServiceChangeListener {
 			response = sb.toString();
 			br.close();
 		} catch (Throwable t) {
-			logger.warn("error while notifying service change to url:" + url, t);
 			notifyException = t;
 		} finally {
 			if (getMethod != null) {
@@ -129,10 +131,11 @@ public class DefaultServiceChangeListener implements ServiceChangeListener {
 		if (response != null && response.startsWith("0")) {
 			isSuccess = true;
 		}
-		if (!isSuccess) {
-			logger.warn("error while notifying service change to url:" + url + ", response:" + response);
-			monitor.logError(new ServiceNotifyException("error while notifying service change to url:" + url
-					+ ", response:" + response, notifyException));
+		if (!isSuccess && notifyException != null) {
+			logger.warn("failed to notify service change to url:" + url + ", response:" + response + ", reason:"
+					+ notifyException.getMessage());
+			monitor.logError(new ServiceNotifyException("failed to notify service change to url:" + url + ", response:"
+					+ response, notifyException));
 		}
 		return isSuccess;
 	}
@@ -141,8 +144,30 @@ public class DefaultServiceChangeListener implements ServiceChangeListener {
 	public synchronized void notifyServiceUnpublished(ProviderConfig<?> providerConfig) {
 		logger.info("start to notify service unpublished:" + providerConfig);
 		try {
-			notifyServiceChange("unpublish", providerConfig);
+			notifyServiceChange("unpublish", null, providerConfig);
 			logger.info("succeed to notify service unpublished:" + providerConfig);
+		} catch (Throwable t) {
+			logger.warn(t.getMessage());
+		}
+	}
+
+	@Override
+	public synchronized void notifyServiceOnline(ProviderConfig<?> providerConfig) {
+		logger.info("start to notify service online:" + providerConfig);
+		try {
+			notifyServiceChange("publish", "online", providerConfig);
+			logger.info("succeed to notify service online:" + providerConfig);
+		} catch (Throwable t) {
+			logger.warn(t.getMessage());
+		}
+	}
+
+	@Override
+	public synchronized void notifyServiceOffline(ProviderConfig<?> providerConfig) {
+		logger.info("start to notify service offline:" + providerConfig);
+		try {
+			notifyServiceChange("unpublish", "offline", providerConfig);
+			logger.info("succeed to notify service offline:" + providerConfig);
 		} catch (Throwable t) {
 			logger.warn(t.getMessage());
 		}

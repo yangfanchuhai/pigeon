@@ -58,7 +58,6 @@ public final class ProviderBootStrap {
 			shutdownHook.setDaemon(true);
 			shutdownHook.setPriority(Thread.MAX_PRIORITY);
 			Runtime.getRuntime().addShutdownHook(shutdownHook);
-
 			ServerConfig config = new ServerConfig();
 			config.setProtocol(Constants.PROTOCOL_HTTP);
 			String poolStrategy = ConfigManagerLoader.getConfigManager().getStringValue(
@@ -79,7 +78,8 @@ public final class ProviderBootStrap {
 						server.start(config);
 						httpServer = server;
 						serversMap.put(server.getProtocol() + server.getPort(), server);
-						logger.warn("pigeon " + server + "[version:" + VersionUtils.VERSION + "] has been started");
+						logger.warn("pigeon " + server + "[version:" + VersionUtils.VERSION
+								+ "] has been started");
 					}
 				}
 			}
@@ -105,7 +105,8 @@ public final class ProviderBootStrap {
 							s.start(serverConfig);
 							s.addService(providerConfig);
 							serversMap.put(s.getProtocol() + serverConfig.getPort(), s);
-							logger.warn("pigeon " + s + "server[version:" + VersionUtils.VERSION + "] has been started");
+							logger.warn("pigeon " + s + "[version:" + VersionUtils.VERSION
+									+ "] has been started");
 							break;
 						}
 					}

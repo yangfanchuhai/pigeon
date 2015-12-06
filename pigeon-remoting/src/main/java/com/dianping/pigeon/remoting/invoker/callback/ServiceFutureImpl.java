@@ -15,11 +15,14 @@ import com.dianping.pigeon.log.LoggerLoader;
 import com.dianping.pigeon.monitor.Monitor;
 import com.dianping.pigeon.monitor.MonitorLoader;
 import com.dianping.pigeon.monitor.MonitorTransaction;
+import com.dianping.pigeon.remoting.common.domain.InvocationContext.TimePhase;
+import com.dianping.pigeon.remoting.common.domain.InvocationContext.TimePoint;
 import com.dianping.pigeon.remoting.common.domain.InvocationResponse;
 import com.dianping.pigeon.remoting.common.exception.InvalidParameterException;
 import com.dianping.pigeon.remoting.common.exception.RpcException;
 import com.dianping.pigeon.remoting.common.monitor.SizeMonitor;
 import com.dianping.pigeon.remoting.common.util.Constants;
+import com.dianping.pigeon.remoting.invoker.domain.InvokerContext;
 import com.dianping.pigeon.remoting.invoker.exception.RequestTimeoutException;
 import com.dianping.pigeon.remoting.invoker.util.InvokerUtils;
 
@@ -35,11 +38,14 @@ public class ServiceFutureImpl extends CallbackFuture implements Future {
 
 	private MonitorTransaction transaction;
 
-	public ServiceFutureImpl(long timeout) {
+	private InvokerContext invocationContext;
+
+	public ServiceFutureImpl(InvokerContext invocationContext, long timeout) {
 		super();
 		this.timeout = timeout;
+		this.invocationContext = invocationContext;
 		callerThread = Thread.currentThread();
-		transaction = monitor.getCurrentTransaction();
+		transaction = monitor.getCurrentCallTransaction();
 	}
 
 	@Override
@@ -55,19 +61,23 @@ public class ServiceFutureImpl extends CallbackFuture implements Future {
 		}
 	}
 
-	public Object get(long timeoutMillis) throws java.lang.InterruptedException,
-			java.util.concurrent.ExecutionException {
+	public Object get(long timeoutMillis) throws InterruptedException, ExecutionException {
 		InvocationResponse response = null;
+		long start = System.currentTimeMillis();
 		if (transaction != null) {
 			transaction.addData("FutureTimeout", timeoutMillis);
+			invocationContext.getTimeline().add(new TimePoint(TimePhase.F, start));
 		}
-		long start = System.currentTimeMillis();
 		try {
 			response = super.getResponse(timeoutMillis);
-			if (transaction != null) {
-				transaction.setDuration(System.currentTimeMillis() - start);
+			if (transaction != null && response != null) {
+				String size = SizeMonitor.getInstance().getLogSize(response.getSize());
+				if (size != null) {
+					transaction.logEvent("PigeonCall.responseSize", size, "" + response.getSize());
+				}
+				invocationContext.getTimeline().add(new TimePoint(TimePhase.R, response.getCreateMillisTime()));
+				invocationContext.getTimeline().add(new TimePoint(TimePhase.F, System.currentTimeMillis()));
 			}
-			SizeMonitor.getInstance().logSize(response.getSize(), "PigeonCall.responseSize", null);
 		} catch (Throwable e) {
 			RuntimeException rpcEx = null;
 			if (e instanceof RpcException) {
@@ -75,7 +85,13 @@ public class ServiceFutureImpl extends CallbackFuture implements Future {
 			} else {
 				rpcEx = new RpcException(e);
 			}
-			logger.error(rpcEx);
+			if (e instanceof RequestTimeoutException) {
+				if (Constants.INVOKER_LOG_TIMEOUT_EXCEPTION) {
+					logger.error(rpcEx);
+				}
+			} else {
+				logger.error(rpcEx);
+			}
 			monitor.logError(rpcEx);
 			if (transaction != null) {
 				try {
@@ -88,7 +104,7 @@ public class ServiceFutureImpl extends CallbackFuture implements Future {
 		} finally {
 			if (transaction != null) {
 				try {
-					transaction.complete();
+					transaction.complete(start);
 				} catch (Throwable e) {
 					monitor.logMonitorError(e);
 				}
@@ -105,7 +121,7 @@ public class ServiceFutureImpl extends CallbackFuture implements Future {
 			throw cause;
 		} else if (response.getMessageType() == Constants.MESSAGE_TYPE_SERVICE_EXCEPTION) {
 			RuntimeException cause = InvokerUtils.toApplicationRuntimeException(response);
-			if (Constants.LOG_INVOKER_APP_EXCEPTION) {
+			if (Constants.INVOKER_LOG_APP_EXCEPTION) {
 				logger.error("error with remote business future call", cause);
 				monitor.logError("error with remote business future call", cause);
 			}

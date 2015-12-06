@@ -11,7 +11,6 @@ import java.io.OutputStream;
 
 import org.apache.logging.log4j.Logger;
 
-import com.dianping.pigeon.config.ConfigManagerLoader;
 import com.dianping.pigeon.log.LoggerLoader;
 import com.dianping.pigeon.remoting.common.codec.DefaultAbstractSerializer;
 import com.dianping.pigeon.remoting.common.domain.DefaultRequest;
@@ -19,26 +18,14 @@ import com.dianping.pigeon.remoting.common.domain.DefaultResponse;
 import com.dianping.pigeon.remoting.common.exception.SerializationException;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
-import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.KeyDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 
 public class JacksonSerializer extends DefaultAbstractSerializer {
 
 	private static final Logger logger = LoggerLoader.getLogger(JacksonSerializer.class);
-	private static boolean deserializeMap = ConfigManagerLoader.getConfigManager().getBooleanValue(
-			"pigeon.codec.jackson.deserializemap", true);
-	private static boolean enableClassInfo = ConfigManagerLoader.getConfigManager().getBooleanValue(
-			"pigeon.codec.jackson.classinfo", false);
-
 	static ObjectMapper mapper = new ObjectMapper();
 
 	static {
@@ -54,29 +41,39 @@ public class JacksonSerializer extends DefaultAbstractSerializer {
 		mapper.setVisibility(PropertyAccessor.GETTER, Visibility.NONE);
 		mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
 
-		if (enableClassInfo) {
-			mapper.enableDefaultTypingAsProperty(ObjectMapper.DefaultTyping.NON_FINAL, "@class");
-		}
-		SimpleModule module = new SimpleModule();
-		module.addKeySerializer(Object.class, new JsonSerializer<Object>() {
+//		mapper.enableDefaultTypingAsProperty(ObjectMapper.DefaultTyping.NON_FINAL, "@class");
+		
+//		SimpleModule module = new SimpleModule();
+//		module.addKeySerializer(Object.class, new JsonSerializer<Object>() {
+//
+//			@Override
+//			public void serialize(Object value, JsonGenerator jgen, SerializerProvider provider) throws IOException,
+//					JsonProcessingException {
+//				jgen.writeFieldName(mapper.writeValueAsString(value));
+//			}
+//
+//		});
+//		module.addKeyDeserializer(Object.class, new KeyDeserializer() {
+//
+//			@Override
+//			public Object deserializeKey(String key, DeserializationContext ctxt) throws IOException,
+//					JsonProcessingException {
+//				try {
+//					return JacksonObjectMapper.convertObject(key);
+//				} catch (SerializationException e) {
+//					throw new IOException("", e);
+//				} catch (ClassNotFoundException e) {
+//					throw new IOException("", e);
+//				} catch (InstantiationException e) {
+//					throw new IOException("", e);
+//				} catch (IllegalAccessException e) {
+//					throw new IOException("", e);
+//				}
+//			}
+//
+//		});
+//		mapper.registerModule(module);
 
-			@Override
-			public void serialize(Object value, JsonGenerator jgen, SerializerProvider provider) throws IOException,
-					JsonProcessingException {
-				jgen.writeFieldName(mapper.writeValueAsString(value));
-			}
-
-		});
-		module.addKeyDeserializer(Object.class, new KeyDeserializer() {
-
-			@Override
-			public Object deserializeKey(String key, DeserializationContext ctxt) throws IOException,
-					JsonProcessingException {
-				return mapper.readValue(key, Object.class);
-			}
-
-		});
-		mapper.registerModule(module);
 		// initialize
 		JacksonSerializer serializer = new JacksonSerializer();
 		String content = serializer.serializeObject(new DefaultRequest());
@@ -106,11 +103,7 @@ public class JacksonSerializer extends DefaultAbstractSerializer {
 			if (logger.isDebugEnabled()) {
 				logger.debug("deserialize:" + new String(sw.toByteArray()));
 			}
-			if (deserializeMap) {
-				return JacksonObjectMapper.convertObject(mapper.readValue(sw.toByteArray(), clazz));
-			} else {
-				return mapper.readValue(sw.toByteArray(), clazz);
-			}
+			return JacksonObjectMapper.convertObject(mapper.readValue(sw.toByteArray(), clazz));
 		} catch (Throwable e) {
 			throw new SerializationException(e);
 		} finally {
@@ -131,11 +124,7 @@ public class JacksonSerializer extends DefaultAbstractSerializer {
 
 	public <T> T deserializeObject(Class<T> objType, String content) throws SerializationException {
 		try {
-			if (deserializeMap) {
-				return JacksonObjectMapper.convertObject(mapper.readValue(content, objType));
-			} else {
-				return mapper.readValue(content, objType);
-			}
+			return JacksonObjectMapper.convertObject(mapper.readValue(content, objType));
 		} catch (Throwable e) {
 			throw new SerializationException(e);
 		}

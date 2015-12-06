@@ -9,6 +9,7 @@ import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.Logger;
+import org.springframework.util.CollectionUtils;
 
 import com.dianping.pigeon.config.ConfigManagerLoader;
 import com.dianping.pigeon.log.LoggerLoader;
@@ -23,11 +24,9 @@ import com.dianping.pigeon.remoting.invoker.Client;
 import com.dianping.pigeon.remoting.invoker.config.InvokerConfig;
 import com.dianping.pigeon.remoting.invoker.exception.ServiceUnavailableException;
 import com.dianping.pigeon.remoting.invoker.listener.ClusterListenerManager;
-import com.dianping.pigeon.remoting.invoker.route.balance.AutoawareLoadBalance;
 import com.dianping.pigeon.remoting.invoker.route.balance.LoadBalance;
 import com.dianping.pigeon.remoting.invoker.route.balance.LoadBalanceManager;
 import com.dianping.pigeon.remoting.invoker.route.balance.RandomLoadBalance;
-import com.dianping.pigeon.remoting.invoker.route.balance.RoundRobinLoadBalance;
 import com.dianping.pigeon.remoting.invoker.route.balance.WeightedAutoawareLoadBalance;
 
 public class DefaultRouteManager implements RouteManager, Disposable {
@@ -38,18 +37,15 @@ public class DefaultRouteManager implements RouteManager, Disposable {
 
 	private ServiceProviderChangeListener providerChangeListener = new InnerServiceProviderChangeListener();
 
-	private static List<String> preferAddresses = new ArrayList<String>();
+	private static List<String> preferAddresses = null;
 
 	private static boolean enablePreferAddresses = ConfigManagerLoader.getConfigManager().getBooleanValue(
 			"pigeon.route.preferaddresses.enable", false);
 
 	public DefaultRouteManager() {
 		RegistryEventListener.addListener(providerChangeListener);
-		LoadBalanceManager.register(RandomLoadBalance.NAME, null, RandomLoadBalance.instance);
-		LoadBalanceManager.register(AutoawareLoadBalance.NAME, null, AutoawareLoadBalance.instance);
-		LoadBalanceManager.register(RoundRobinLoadBalance.NAME, null, RoundRobinLoadBalance.instance);
-		LoadBalanceManager.register(WeightedAutoawareLoadBalance.NAME, null, WeightedAutoawareLoadBalance.instance);
 		if (enablePreferAddresses) {
+			preferAddresses = new ArrayList<String>();
 			String preferAddressesConfig = ConfigManagerLoader.getConfigManager().getStringValue(
 					"pigeon.route.preferaddresses", "");
 			String[] preferAddressesArray = preferAddressesConfig.split(",");
@@ -64,7 +60,9 @@ public class DefaultRouteManager implements RouteManager, Disposable {
 	public Client route(List<Client> clientList, InvokerConfig<?> invokerConfig, InvocationRequest request) {
 		if (logger.isDebugEnabled()) {
 			for (Client client : clientList) {
-				logger.debug("available service provider：\t" + client.getAddress());
+				if (client != null) {
+					logger.debug("available service provider：\t" + client.getAddress());
+				}
 			}
 		}
 		List<Client> availableClients = getAvailableClients(clientList, invokerConfig, request);
@@ -106,12 +104,14 @@ public class DefaultRouteManager implements RouteManager, Disposable {
 		List<Client> filteredClients = new ArrayList<Client>(clientList.size());
 		boolean existClientBuffToLimit = false;
 		for (Client client : clientList) {
-			String address = client.getAddress();
-			if (client.isActive() && RegistryManager.getInstance().getServiceWeightFromCache(address) > 0) {
-				if (!isWriteBufferLimit || client.isWritable()) {
-					filteredClients.add(client);
-				} else {
-					existClientBuffToLimit = true;
+			if (client != null) {
+				String address = client.getAddress();
+				if (client.isActive() && RegistryManager.getInstance().getServiceWeightFromCache(address) > 0) {
+					if (!isWriteBufferLimit || client.isWritable()) {
+						filteredClients.add(client);
+					} else {
+						existClientBuffToLimit = true;
+					}
 				}
 			}
 		}
@@ -143,7 +143,7 @@ public class DefaultRouteManager implements RouteManager, Disposable {
 		}
 		List<Client> preferClients = null;
 		if (enablePreferAddresses) {
-			if (availableClients != null && availableClients.size() > 1) {
+			if (availableClients != null && availableClients.size() > 1 && !CollectionUtils.isEmpty(preferAddresses)) {
 				preferClients = new ArrayList<Client>();
 				for (String addr : preferAddresses) {
 					for (Client client : availableClients) {

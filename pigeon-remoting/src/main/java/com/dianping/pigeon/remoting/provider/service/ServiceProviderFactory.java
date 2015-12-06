@@ -44,8 +44,7 @@ public final class ServiceProviderFactory {
 
 	private static ServiceChangeListener serviceChangeListener = new DefaultServiceChangeListener();
 
-	private static boolean DEFAULT_NOTIFY_ENABLE = ConfigConstants.ENV_DEV.equalsIgnoreCase(configManager.getEnv()) ? false
-			: Constants.DEFAULT_NOTIFY_ENABLE;
+	private static boolean DEFAULT_NOTIFY_ENABLE = Constants.DEFAULT_NOTIFY_ENABLE;
 
 	private static ConcurrentHashMap<String, Integer> serverWeightCache = new ConcurrentHashMap<String, Integer>();
 
@@ -141,6 +140,8 @@ public final class ServiceProviderFactory {
 							Constants.KEY_AUTOREGISTER_ENABLE, true);
 					if (autoRegisterEnable) {
 						ServiceWarmupListener.start();
+					} else {
+						logger.info("auto register is disabled");
 					}
 
 					providerConfig.setPublished(true);
@@ -367,6 +368,30 @@ public final class ServiceProviderFactory {
 
 	public static Map<String, ProviderConfig<?>> getAllServiceProviders() {
 		return serviceCache;
+	}
+	
+	public static void notifyServiceOnline() {
+		for (String url : serviceCache.keySet()) {
+			ProviderConfig<?> providerConfig = serviceCache.get(url);
+			if (providerConfig != null) {
+				//do notify
+				if (serviceChangeListener != null) {
+					serviceChangeListener.notifyServiceOnline(providerConfig);
+				}
+			}
+		}
+	}
+	
+	public static void notifyServiceOffline() {
+		for (String url : serviceCache.keySet()) {
+			ProviderConfig<?> providerConfig = serviceCache.get(url);
+			if (providerConfig != null) {
+				//do notify
+				if (serviceChangeListener != null) {
+					serviceChangeListener.notifyServiceOffline(providerConfig);
+				}
+			}
+		}
 	}
 
 }

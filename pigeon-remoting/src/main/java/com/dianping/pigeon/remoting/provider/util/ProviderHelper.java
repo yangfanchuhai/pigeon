@@ -6,6 +6,11 @@ package com.dianping.pigeon.remoting.provider.util;
 
 import java.util.List;
 
+import com.dianping.pigeon.monitor.Monitor;
+import com.dianping.pigeon.monitor.MonitorLoader;
+import com.dianping.pigeon.monitor.MonitorTransaction;
+import com.dianping.pigeon.remoting.common.domain.InvocationContext.TimePhase;
+import com.dianping.pigeon.remoting.common.domain.InvocationContext.TimePoint;
 import com.dianping.pigeon.remoting.common.domain.InvocationRequest;
 import com.dianping.pigeon.remoting.common.domain.InvocationResponse;
 import com.dianping.pigeon.remoting.common.monitor.SizeMonitor;
@@ -18,6 +23,8 @@ import com.dianping.pigeon.remoting.provider.process.statistics.ProviderStatisti
 
 public final class ProviderHelper {
 
+	private static final Monitor monitor = MonitorLoader.getMonitor();
+
 	private static ThreadLocal<ProviderContext> tlContext = new ThreadLocal<ProviderContext>();
 
 	public static void setContext(ProviderContext context) {
@@ -26,19 +33,62 @@ public final class ProviderHelper {
 
 	public static ProviderContext getContext() {
 		ProviderContext context = tlContext.get();
+		tlContext.remove();
 		return context;
 	}
 
+	public static void clearContext() {
+		tlContext.remove();
+	}
+
 	public static void writeSuccessResponse(ProviderContext context, Object returnObj) {
-		if (Constants.REPLY_MANUAL) {
+		if (Constants.REPLY_MANUAL && context != null) {
+			context.getTimeline().add(new TimePoint(TimePhase.B, System.currentTimeMillis()));
 			InvocationRequest request = context.getRequest();
 			InvocationResponse response = ProviderUtils.createSuccessResponse(request, returnObj);
 			ProviderChannel channel = context.getChannel();
-			channel.write(response);
-			if (response != null) {
-				SizeMonitor.getInstance().logSize(response.getSize(), "PigeonService.responseSize", null);
+			MonitorTransaction transaction = null;
+			if (Constants.PROVIDER_CALLBACK_MONITOR_ENABLE) {
+				MonitorTransaction currentTransaction = monitor.getCurrentServiceTransaction();
+				try {
+					if (currentTransaction == null) {
+						transaction = monitor.createTransaction("PigeonServiceCallback", context.getMethodUri(),
+								context);
+						if (transaction != null) {
+							transaction.setStatusOk();
+							monitor.logEvent("PigeonService.app", request.getApp(), "");
+							String reqSize = SizeMonitor.getInstance().getLogSize(request.getSize());
+							if (reqSize != null) {
+								monitor.logEvent("PigeonService.requestSize", reqSize, "" + request.getSize());
+							}
+						}
+					}
+				} catch (Throwable e) {
+					monitor.logMonitorError(e);
+				}
+				if (request.getCallType() != Constants.CALLTYPE_NOREPLY) {
+					try {
+						channel.write(response);
+					} finally {
+						if (Constants.PROVIDER_CALLBACK_MONITOR_ENABLE) {
+							if (response != null && response.getSize() > 0) {
+								String respSize = SizeMonitor.getInstance().getLogSize(response.getSize());
+								if (respSize != null) {
+									monitor.logEvent("PigeonService.responseSize", respSize, "" + response.getSize());
+								}
+							}
+							if (transaction != null) {
+								try {
+									transaction.complete();
+								} catch (Throwable e) {
+									monitor.logMonitorError(e);
+								}
+							}
+						}
+					}
+				}
+				ProviderStatisticsHolder.flowOut(request);
 			}
-			ProviderStatisticsHolder.flowOut(request);
 			List<ProviderProcessInterceptor> interceptors = ProviderProcessInterceptorFactory.getInterceptors();
 			for (ProviderProcessInterceptor interceptor : interceptors) {
 				interceptor.postInvoke(request, response);

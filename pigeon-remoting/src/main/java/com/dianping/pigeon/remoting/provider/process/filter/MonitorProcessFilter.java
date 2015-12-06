@@ -40,7 +40,7 @@ public class MonitorProcessFilter implements ServiceInvocationFilter<ProviderCon
 
 	private static boolean isAccessLogEnabled = ConfigManagerLoader.getConfigManager().getBooleanValue(
 			"pigeon.provider.accesslog.enable", false);
-
+	
 	@Override
 	public InvocationResponse invoke(ServiceInvocationHandler handler, ProviderContext invocationContext)
 			throws Throwable {
@@ -52,33 +52,42 @@ public class MonitorProcessFilter implements ServiceInvocationFilter<ProviderCon
 		MonitorTransaction transaction = null;
 		String fromIp = null;
 		if (monitor != null) {
-			String strMethod = null;
+			String methodUri = null;
 			try {
 				ServiceMethod serviceMethod = ServiceMethodFactory.getMethod(request);
 				invocationContext.setServiceMethod(serviceMethod);
-				strMethod = InvocationUtils.getRemoteCallFullName(request.getServiceName(), request.getMethodName(),
+				methodUri = InvocationUtils.getRemoteCallFullName(request.getServiceName(), request.getMethodName(),
 						serviceMethod.getOriginalParameterClasses());
 			} catch (Throwable e) {
 			}
 			try {
-				if (StringUtils.isBlank(strMethod)) {
-					strMethod = InvocationUtils.getRemoteCallFullName(request.getServiceName(),
+				if (StringUtils.isBlank(methodUri)) {
+					methodUri = InvocationUtils.getRemoteCallFullName(request.getServiceName(),
 							request.getMethodName(), request.getParamClassName());
 				}
-				transaction = monitor.createTransaction("PigeonService", strMethod, invocationContext);
-				monitor.logEvent("PigeonService.app", request.getApp(), "");
-				String parameters = "";
-				fromIp = channel.getRemoteAddress();
-				if (Constants.LOG_PARAMETERS) {
-					StringBuilder event = new StringBuilder();
-					event.append(InvocationUtils.toJsonString(request.getParameters(), 1000, 50));
-					parameters = event.toString();
-				}
-				monitor.logEvent("PigeonService.client", fromIp, parameters);
-				monitor.logEvent("PigeonService.QPS", "S" + Calendar.getInstance().get(Calendar.SECOND), "");
-				SizeMonitor.getInstance().logSize(request.getSize(), "PigeonService.requestSize", null);
-				if (!Constants.PROTOCOL_DEFAULT.equals(channel.getProtocol())) {
-					transaction.addData("Protocol", channel.getProtocol());
+				invocationContext.setMethodUri(methodUri);
+
+				transaction = monitor.createTransaction("PigeonService", methodUri, invocationContext);
+				if (transaction != null) {
+					transaction.setStatusOk();
+					monitor.setCurrentServiceTransaction(transaction);
+					transaction.logEvent("PigeonService.app", request.getApp(), "");
+					String parameters = "";
+					fromIp = channel.getRemoteAddress();
+					if (Constants.LOG_PARAMETERS) {
+						StringBuilder event = new StringBuilder();
+						event.append(InvocationUtils.toJsonString(request.getParameters(), 1000, 50));
+						parameters = event.toString();
+					}
+					transaction.logEvent("PigeonService.client", fromIp, parameters);
+					transaction.logEvent("PigeonService.QPS", "S" + Calendar.getInstance().get(Calendar.SECOND), "");
+					String reqSize = SizeMonitor.getInstance().getLogSize(request.getSize());
+					if (reqSize != null) {
+						transaction.logEvent("PigeonService.requestSize", reqSize, "" + request.getSize());
+					}
+					if (!Constants.PROTOCOL_DEFAULT.equals(channel.getProtocol())) {
+						transaction.addData("Protocol", channel.getProtocol());
+					}
 				}
 				ContextUtils.putLocalContext("CurrentServiceUrl",
 						request.getServiceName() + "#" + request.getMethodName());
@@ -105,7 +114,11 @@ public class MonitorProcessFilter implements ServiceInvocationFilter<ProviderCon
 			if (transaction != null) {
 				try {
 					if (response != null) {
-						SizeMonitor.getInstance().logSize(response.getSize(), "PigeonService.responseSize", null);
+						String respSize = SizeMonitor.getInstance().getLogSize(response.getSize());
+						if (respSize != null) {
+							transaction.logEvent("PigeonService.responseSize",
+									respSize, "" + response.getSize());
+						}
 					}
 					Map<String, Serializable> globalContext = ContextUtils.getGlobalContext();
 					if (!CollectionUtils.isEmpty(globalContext)) {
@@ -121,10 +134,9 @@ public class MonitorProcessFilter implements ServiceInvocationFilter<ProviderCon
 					String from = (String) ContextUtils.getLocalContext("RequestIp");
 					if (from != null) {
 						transaction.addData("RequestIp", from);
-						monitor.logEvent("PigeonConsole.client", from, "");
+						transaction.logEvent("PigeonConsole.client", from, "");
 					}
 					transaction.writeMonitorContext();
-					transaction.setStatusOk();
 				} catch (Throwable e) {
 					monitor.logError(e);
 				}
@@ -143,6 +155,7 @@ public class MonitorProcessFilter implements ServiceInvocationFilter<ProviderCon
 				} catch (Throwable e) {
 					monitor.logMonitorError(e);
 				}
+				monitor.clearServiceTransaction();
 			}
 			ContextUtils.clearLocalContext();
 			ContextUtils.clearRequestContext();

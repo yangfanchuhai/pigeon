@@ -15,8 +15,6 @@ import com.dianping.pigeon.remoting.common.exception.ApplicationException;
 import com.dianping.pigeon.remoting.common.exception.NetworkException;
 import com.dianping.pigeon.remoting.common.exception.RpcException;
 import com.dianping.pigeon.remoting.common.util.Constants;
-import com.dianping.pigeon.remoting.common.util.TimelineUtils;
-import com.dianping.pigeon.remoting.common.util.TimelineUtils.Phase;
 import com.dianping.pigeon.remoting.invoker.Client;
 import com.dianping.pigeon.remoting.invoker.callback.Callback;
 import com.dianping.pigeon.remoting.invoker.config.InvokerConfig;
@@ -42,19 +40,16 @@ public class InvokerUtils {
 			callback.setClient(client);
 			invocationRepository.put(request.getSequence(), invocationBean);
 		}
-		TimelineUtils.time(request, TimelineUtils.getLocalIp(), Phase.Start);
 		InvocationResponse response = null;
 		try {
 			response = client.write(request, callback);
 		} catch (NetworkException e) {
 			invocationRepository.remove(request.getSequence());
-			TimelineUtils.removeTimeline(request, TimelineUtils.getLocalIp());
 			logger.warn("network exception ocurred:" + request, e);
 			throw e;
 		} finally {
 			if (response != null) {
 				invocationRepository.remove(request.getSequence());
-				TimelineUtils.removeTimeline(request, TimelineUtils.getLocalIp());
 			}
 		}
 		return response;
@@ -240,6 +235,16 @@ public class InvokerUtils {
 		public void setResponseValues(Map<String, Serializable> responseValues) {
 
 		}
+
+		@Override
+		public long getCreateMillisTime() {
+			return 0;
+		}
+
+		@Override
+		public void setCreateMillisTime(long createMillisTime) {
+			
+		}
 	}
 
 	public static class FutureResponse implements InvocationResponse {
@@ -359,6 +364,18 @@ public class InvokerUtils {
 		public void setResponseValues(Map<String, Serializable> responseValues) {
 			// TODO Auto-generated method stub
 
+		}
+
+		@Override
+		public long getCreateMillisTime() {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+
+		@Override
+		public void setCreateMillisTime(long createMillisTime) {
+			// TODO Auto-generated method stub
+			
 		}
 	}
 }

@@ -24,16 +24,6 @@ public final class NettyCodecUtils {
 	}
 
 	@SuppressWarnings("unchecked")
-	public static Object getAttachmentNotRemove(ChannelHandlerContext ctx, int seq) {
-		Map<Integer, Object> attachments = (Map<Integer, Object>) ctx.getAttachment();
-		if (attachments == null) {
-			//attachments = createAttachment(ctx);
-			return null;
-		}
-		return attachments.get(seq);
-	}
-
-	@SuppressWarnings("unchecked")
 	public static Object getAttachment(ChannelHandlerContext ctx, int seq) {
 		Map<Integer, Object> attachments = (Map<Integer, Object>) ctx.getAttachment();
 		if (attachments == null) {

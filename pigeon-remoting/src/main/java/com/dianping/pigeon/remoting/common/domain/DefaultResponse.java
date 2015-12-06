@@ -39,6 +39,9 @@ public class DefaultResponse implements InvocationResponse {
 	@JsonIgnore
 	private transient int size;
 
+	@JsonIgnore
+	private transient long createMillisTime;
+
 	private Map<String, Serializable> responseValues = null;
 
 	public DefaultResponse() {
@@ -159,6 +162,14 @@ public class DefaultResponse implements InvocationResponse {
 
 	public void setResponseValues(Map<String, Serializable> responseValues) {
 		this.responseValues = responseValues;
+	}
+
+	public long getCreateMillisTime() {
+		return createMillisTime;
+	}
+
+	public void setCreateMillisTime(long createMillisTime) {
+		this.createMillisTime = createMillisTime;
 	}
 
 }

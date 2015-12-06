@@ -24,8 +24,6 @@ import com.dianping.pigeon.remoting.common.domain.InvocationRequest;
 import com.dianping.pigeon.remoting.common.domain.InvocationResponse;
 import com.dianping.pigeon.remoting.common.exception.NetworkException;
 import com.dianping.pigeon.remoting.common.util.Constants;
-import com.dianping.pigeon.remoting.common.util.TimelineUtils;
-import com.dianping.pigeon.remoting.common.util.TimelineUtils.Phase;
 import com.dianping.pigeon.remoting.invoker.AbstractClient;
 import com.dianping.pigeon.remoting.invoker.Client;
 import com.dianping.pigeon.remoting.invoker.callback.Callback;
@@ -266,8 +264,6 @@ public class NettyClient extends AbstractClient {
 		}
 
 		public void operationComplete(ChannelFuture future) throws Exception {
-			// TIMELINE_client_sent
-			TimelineUtils.time(request, TimelineUtils.getLocalIp(), Phase.ClientSent);
 			if (future.isSuccess()) {
 				return;
 			}

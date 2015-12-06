@@ -17,10 +17,13 @@ public class DefaultProviderContext extends AbstractInvocationContext implements
 	private Future<?> future;
 	private Thread thread;
 	private ServiceMethod serviceMethod;
+	private String methodUri;
 
 	public DefaultProviderContext(InvocationRequest request, ProviderChannel channel) {
 		super(request);
 		this.channel = channel;
+		getTimeline().add(new TimePoint(TimePhase.R, request.getCreateMillisTime()));
+		getTimeline().add(new TimePoint(TimePhase.R, System.currentTimeMillis()));
 	}
 
 	public Throwable getServiceError() {
@@ -63,6 +66,16 @@ public class DefaultProviderContext extends AbstractInvocationContext implements
 	@Override
 	public ServiceMethod getServiceMethod() {
 		return serviceMethod;
+	}
+
+	@Override
+	public String getMethodUri() {
+		return methodUri;
+	}
+
+	@Override
+	public void setMethodUri(String uri) {
+		this.methodUri = uri;
 	}
 
 }

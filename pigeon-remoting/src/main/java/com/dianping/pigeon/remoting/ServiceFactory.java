@@ -151,12 +151,13 @@ public class ServiceFactory {
 				ClientManager.getInstance().registerClients(invokerConfig.getUrl(), invokerConfig.getGroup(),
 						invokerConfig.getVip());
 			} catch (Throwable t) {
-				try {
-					ClientManager.getInstance().registerClients(invokerConfig.getUrl(),
-							invokerConfig.getGroup(), invokerConfig.getVip());
-				} catch (Throwable t2) {
-					logger.warn("error while trying to setup service client:" + invokerConfig, t2);
-				}
+//				try {
+//					ClientManager.getInstance().registerClients(invokerConfig.getUrl(),
+//							invokerConfig.getGroup(), invokerConfig.getVip());
+//				} catch (Throwable t2) {
+//					logger.warn("error while trying to setup service client:" + invokerConfig, t2);
+//				}
+				logger.warn("error while trying to setup service client:" + invokerConfig, t);
 			}
 			services.put(invokerConfig, service);
 		}
@@ -392,16 +393,31 @@ public class ServiceFactory {
 	}
 
 	public static void setServerWeight(int weight) throws RegistryException {
+		logger.info("set weight:" + weight);
 		ServiceProviderFactory.setServerWeight(weight);
+		
+		if(weight == 0) {
+			ServiceProviderFactory.notifyServiceOffline();
+			return ;
+		}
+		
+		if(weight > 0 && weight <= 100) {
+			ServiceProviderFactory.notifyServiceOnline();
+			return ;
+		}
 	}
 
 	public static void online() throws RegistryException {
+		logger.info("online");
 		ServiceProviderFactory.setServerWeight(Constants.WEIGHT_DEFAULT);
+		ServiceProviderFactory.notifyServiceOnline();
 	}
 
 	public static void offline() throws RegistryException {
+		logger.info("offline");
 		ServiceWarmupListener.stop();
 		ServiceProviderFactory.setServerWeight(0);
+		ServiceProviderFactory.notifyServiceOffline();
 	}
 
 	public static boolean isAutoPublish() {

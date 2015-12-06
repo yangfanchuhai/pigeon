@@ -10,7 +10,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang.StringUtils;
+
 import com.dianping.pigeon.log.LoggerLoader;
+
 import org.apache.logging.log4j.Logger;
 
 import com.dianping.pigeon.remoting.common.codec.Serializer;
@@ -36,6 +38,7 @@ public class HttpServerHandler implements HttpHandler {
 
 	@Override
 	public void handle(HttpServletRequest request, HttpServletResponse response) throws Exception {
+		long createTime = System.currentTimeMillis();
 		String uri = request.getRequestURI();
 		String path = uri.substring(uri.lastIndexOf("/") + 1);
 		String serialize = (String) request.getParameter("serialize");
@@ -63,6 +66,7 @@ public class HttpServerHandler implements HttpHandler {
 			}
 			invocationRequest.getParameters();
 			invocationRequest.setServiceName(HttpUtils.getDefaultServiceUrl(invocationRequest.getServiceName()));
+			invocationRequest.setCreateMillisTime(createTime);
 			ProviderContext invocationContext = new DefaultProviderContext(invocationRequest, new HttpChannel(request,
 					response));
 			Future<InvocationResponse> invocationResponse = null;

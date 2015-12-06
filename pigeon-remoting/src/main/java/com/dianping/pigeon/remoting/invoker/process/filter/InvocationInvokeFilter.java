@@ -6,8 +6,6 @@ package com.dianping.pigeon.remoting.invoker.process.filter;
 
 import java.util.List;
 
-import com.dianping.pigeon.monitor.Monitor;
-import com.dianping.pigeon.monitor.MonitorLoader;
 import com.dianping.pigeon.remoting.common.domain.InvocationRequest;
 import com.dianping.pigeon.remoting.common.domain.InvocationResponse;
 import com.dianping.pigeon.remoting.common.process.ServiceInvocationFilter;
@@ -18,8 +16,6 @@ import com.dianping.pigeon.remoting.invoker.process.InvokerProcessInterceptor;
 import com.dianping.pigeon.remoting.invoker.process.InvokerProcessInterceptorFactory;
 
 public abstract class InvocationInvokeFilter implements ServiceInvocationFilter<InvokerContext> {
-
-	protected static final Monitor monitor = MonitorLoader.getMonitor();
 
 	public static enum InvokePhase {
 		Call, Before_Call, Cluster, Before_Cluster, Error_Handle, Finalize;

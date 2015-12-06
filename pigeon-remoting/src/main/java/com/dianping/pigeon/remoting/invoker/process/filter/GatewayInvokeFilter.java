@@ -4,10 +4,9 @@
  */
 package com.dianping.pigeon.remoting.invoker.process.filter;
 
-import com.dianping.pigeon.log.LoggerLoader;
-
 import org.apache.logging.log4j.Logger;
 
+import com.dianping.pigeon.log.LoggerLoader;
 import com.dianping.pigeon.registry.RegistryManager;
 import com.dianping.pigeon.remoting.common.domain.InvocationRequest;
 import com.dianping.pigeon.remoting.common.domain.InvocationResponse;
@@ -29,7 +28,7 @@ import com.dianping.pigeon.threadpool.ThreadPool;
 public class GatewayInvokeFilter extends InvocationInvokeFilter {
 
 	private static final Logger logger = LoggerLoader.getLogger(GatewayInvokeFilter.class);
-	private static ThreadPool statisticsCheckerPool = new DefaultThreadPool("Pigeon-Server-Statistics-Checker");
+	private static ThreadPool statisticsCheckerPool = new DefaultThreadPool("Pigeon-Client-Statistics-Checker");
 
 	static {
 		InvokerStatisticsChecker appStatisticsChecker = new InvokerStatisticsChecker();
@@ -45,7 +44,7 @@ public class GatewayInvokeFilter extends InvocationInvokeFilter {
 		InvokerConfig<?> invokerConfig = invocationContext.getInvokerConfig();
 		InvocationRequest request = invocationContext.getRequest();
 		Client client = invocationContext.getClient();
-		String targetApp = RegistryManager.getInstance().getServerApp(client.getAddress());
+		String targetApp = RegistryManager.getInstance().getReferencedApp(client.getAddress());
 		try {
 			InvokerStatisticsHolder.flowIn(request, targetApp);
 			try {

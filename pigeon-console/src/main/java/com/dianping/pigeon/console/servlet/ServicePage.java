@@ -28,6 +28,8 @@ public class ServicePage {
 
 	private String online = "";
 
+	private String phase = "";
+
 	private List<String> invokers;
 
 	private Map<String, List<ClientInfo>> heartbeats;

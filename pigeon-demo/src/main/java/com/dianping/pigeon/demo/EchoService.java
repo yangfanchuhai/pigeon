@@ -124,28 +124,6 @@ public interface EchoService {
 		}
 	}
 
-	public static class UserProfile implements Serializable {
-		private String fav;
-		private BigDecimal v;
-
-		public BigDecimal getV() {
-			return v;
-		}
-
-		public void setV(BigDecimal v) {
-			this.v = v;
-		}
-
-		public String getFav() {
-			return fav;
-		}
-
-		public void setFav(String fav) {
-			this.fav = fav;
-		}
-
-	}
-
 	public enum Gender {
 		AUTO, MALE, FEMALE;
 	}

@@ -31,12 +31,11 @@ public class Client {
 		while (true) {
 			try {
 				ContextUtils.putRequestContext("key1", "1");
-				System.out.println(echoService.echo("hi " + i++));
+				System.out.println(echoService.echo("hi," + i++));
 
-				// echoServiceWithFuture.echo("hi " + i++);
-				// Future<String> future =
-				// ServiceFutureFactory.getFuture(String.class);
-				// System.out.println(future.get());
+				echoServiceWithFuture.echo("hi with future," + i++);
+				Future<String> future = ServiceFutureFactory.getFuture(String.class);
+				System.out.println(future.get());
 
 				// System.out.println("response:" +
 				// ContextUtils.getResponseContext("key1"));

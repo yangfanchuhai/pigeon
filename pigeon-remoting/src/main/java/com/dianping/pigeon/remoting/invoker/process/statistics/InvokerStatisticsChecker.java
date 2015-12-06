@@ -1,7 +1,10 @@
 package com.dianping.pigeon.remoting.invoker.process.statistics;
 
-import com.dianping.pigeon.log.LoggerLoader;
+import java.util.Map;
+
 import org.apache.logging.log4j.Logger;
+
+import com.dianping.pigeon.log.LoggerLoader;
 
 public class InvokerStatisticsChecker implements Runnable {
 
@@ -17,20 +20,22 @@ public class InvokerStatisticsChecker implements Runnable {
 				Thread.sleep(5000);
 			} catch (InterruptedException e) {
 			}
-			if (InvokerStatisticsHolder.getCapacityBuckets() != null) {
+			Map<String, InvokerCapacityBucket> buckets = InvokerStatisticsHolder.getCapacityBuckets();
+			if (buckets != null) {
 				try {
-					for (InvokerCapacityBucket bucket : InvokerStatisticsHolder.getCapacityBuckets().values()) {
+					for (String key : buckets.keySet()) {
+						InvokerCapacityBucket bucket = buckets.get(key);
 						bucket.resetRequestsInSecondCounter();
 					}
 					if (++i % 12 == 0) {
 						i = 0;
-						for (InvokerCapacityBucket bucket : InvokerStatisticsHolder.getCapacityBuckets().values()) {
+						for (InvokerCapacityBucket bucket : buckets.values()) {
 							bucket.resetRequestsInMinuteCounter();
 						}
 					}
 					if (++j % 17280 == 0) {
 						j = 0;
-						for (InvokerCapacityBucket bucket : InvokerStatisticsHolder.getCapacityBuckets().values()) {
+						for (InvokerCapacityBucket bucket : buckets.values()) {
 							bucket.resetRequestsInDayCounter();
 						}
 					}

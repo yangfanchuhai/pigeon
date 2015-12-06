@@ -51,7 +51,7 @@ public class CuratorClient {
 	private static ExecutorService curatorEventListenerThreadPool = Executors
 			.newCachedThreadPool(new DefaultThreadFactory("Pigeon-Curator-Event-Listener"));
 
-	private static final Monitor monitor = MonitorLoader.getMonitor();
+	private static Monitor monitor = MonitorLoader.getMonitor();
 
 	private String address;
 
@@ -334,9 +334,5 @@ public class CuratorClient {
 		CuratorZookeeperClient client = getClient().getZookeeperClient();
 		return new StringBuilder().append("connected:").append(client.isConnected()).append(", retries:")
 				.append(((MyRetryPolicy) client.getRetryPolicy()).getRetryCount()).toString();
-	}
-
-	public String toString() {
-		return this.address;
 	}
 }

@@ -1,5 +1,7 @@
 package com.dianping.pigeon.remoting.provider.process.statistics;
 
+import java.util.Map;
+
 import org.apache.logging.log4j.Logger;
 
 import com.dianping.pigeon.log.LoggerLoader;
@@ -18,14 +20,16 @@ public class ProviderStatisticsChecker implements Runnable {
 				Thread.sleep(5000);
 			} catch (InterruptedException e) {
 			}
-			if (ProviderStatisticsHolder.getCapacityBuckets() != null) {
+			Map<String, ProviderCapacityBucket> buckets = ProviderStatisticsHolder.getCapacityBuckets();
+			if (buckets != null) {
 				try {
-					for (ProviderCapacityBucket bucket : ProviderStatisticsHolder.getCapacityBuckets().values()) {
+					for (String key : buckets.keySet()) {
+						ProviderCapacityBucket bucket = buckets.get(key);
 						bucket.resetRequestsInSecondCounter();
 					}
 					if (++i % 12 == 0) {
 						i = 0;
-						for (ProviderCapacityBucket bucket : ProviderStatisticsHolder.getCapacityBuckets().values()) {
+						for (ProviderCapacityBucket bucket : buckets.values()) {
 							bucket.resetRequestsInMinuteCounter();
 						}
 					}
@@ -35,5 +39,4 @@ public class ProviderStatisticsChecker implements Runnable {
 			}
 		}
 	}
-
 }

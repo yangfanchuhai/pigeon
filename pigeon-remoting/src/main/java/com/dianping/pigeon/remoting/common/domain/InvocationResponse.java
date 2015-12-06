@@ -12,7 +12,7 @@ public interface InvocationResponse extends InvocationSerializable {
 	void setMessageType(int messageType);
 
 	int getMessageType();
-
+	
 	Object getResponse();
 
 	void setResponse(Object response);
@@ -20,4 +20,8 @@ public interface InvocationResponse extends InvocationSerializable {
 	Map<String, Serializable> getResponseValues();
 
 	void setResponseValues(Map<String, Serializable> responseValues);
+
+	long getCreateMillisTime();
+
+	void setCreateMillisTime(long createMillisTime);
 }

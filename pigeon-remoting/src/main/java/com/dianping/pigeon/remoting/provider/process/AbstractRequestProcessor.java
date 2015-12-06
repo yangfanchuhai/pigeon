@@ -26,13 +26,15 @@ import com.dianping.pigeon.util.ThreadPoolUtils;
 
 public abstract class AbstractRequestProcessor implements RequestProcessor {
 
-	private static ThreadPool timeCheckThreadPool = new DefaultThreadPool("pigeon-provider-timeout-checker");
+	private static ThreadPool timeCheckThreadPool = new DefaultThreadPool("Pigeon-Provider-Timeout-Checker");
 
 	protected Map<InvocationRequest, ProviderContext> requestContextMap = new ConcurrentHashMap<InvocationRequest, ProviderContext>();
 
 	protected static final Logger logger = LoggerLoader.getLogger(RequestThreadPoolProcessor.class);
 
 	private static final Monitor monitor = MonitorLoader.getMonitor();
+	
+	protected RequestTimeoutListener requestTimeoutListener;
 
 	public AbstractRequestProcessor() {
 	}
@@ -43,12 +45,13 @@ public abstract class AbstractRequestProcessor implements RequestProcessor {
 	public abstract void doStart();
 
 	public void start() {
-		timeCheckThreadPool.execute(new RequestTimeoutListener(this, requestContextMap));
+		requestTimeoutListener = new RequestTimeoutListener(this, requestContextMap);
+		timeCheckThreadPool.execute(requestTimeoutListener);
 		doStart();
 	}
 
 	public abstract void doStop();
-
+	
 	public void stop() {
 		ThreadPoolUtils.shutdown(timeCheckThreadPool.getExecutor());
 		doStop();
@@ -57,7 +60,7 @@ public abstract class AbstractRequestProcessor implements RequestProcessor {
 	public Map<InvocationRequest, ProviderContext> getRequestContextMap() {
 		return requestContextMap;
 	}
-
+	
 	public Future<InvocationResponse> processRequest(final InvocationRequest request,
 			final ProviderContext providerContext) {
 		if (request.getCreateMillisTime() == 0) {

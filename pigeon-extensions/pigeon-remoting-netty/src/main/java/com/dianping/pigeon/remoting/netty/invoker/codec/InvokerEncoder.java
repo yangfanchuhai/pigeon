@@ -15,10 +15,7 @@ import org.jboss.netty.channel.Channels;
 
 import com.dianping.pigeon.remoting.common.codec.SerializerFactory;
 import com.dianping.pigeon.remoting.common.domain.InvocationResponse;
-import com.dianping.pigeon.remoting.common.domain.InvocationSerializable;
 import com.dianping.pigeon.remoting.common.util.Constants;
-import com.dianping.pigeon.remoting.common.util.TimelineUtils;
-import com.dianping.pigeon.remoting.common.util.TimelineUtils.Phase;
 import com.dianping.pigeon.remoting.netty.codec.AbstractEncoder;
 import com.dianping.pigeon.remoting.netty.codec.NettyCodecUtils;
 
@@ -32,8 +29,6 @@ public class InvokerEncoder extends AbstractEncoder {
 		NettyCodecUtils.setAttachment(ctx, Constants.ATTACHMENT_RETRY, msg);
 		Object[] message = (Object[]) msg;
 		Object encoded = super.encode(ctx, channel, message[0]);
-		// TIMELINE_client_encoded
-		TimelineUtils.time((InvocationSerializable) message[0], TimelineUtils.getLocalIp(), Phase.ClientEncoded);
 		return encoded;
 	}
 

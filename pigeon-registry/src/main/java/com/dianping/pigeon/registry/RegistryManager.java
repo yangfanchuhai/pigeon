@@ -4,7 +4,7 @@
  */
 package com.dianping.pigeon.registry;
 
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -45,9 +45,9 @@ public class RegistryManager {
 
 	private static Registry registry = ExtensionLoader.getExtension(Registry.class);
 
-	private static Map<String, Set<HostInfo>> referencedServiceAddresses = new ConcurrentHashMap<String, Set<HostInfo>>();
+	private static ConcurrentHashMap<String, Set<HostInfo>> referencedServiceAddresses = new ConcurrentHashMap<String, Set<HostInfo>>();
 
-	private static Map<String, HostInfo> referencedAddresses = new ConcurrentHashMap<String, HostInfo>();
+	private static ConcurrentHashMap<String, HostInfo> referencedAddresses = new ConcurrentHashMap<String, HostInfo>();
 
 	private static ConfigManager configManager = ConfigManagerLoader.getConfigManager();
 
@@ -57,7 +57,7 @@ public class RegistryManager {
 
 	private static final boolean fallbackDefaultGroup = configManager.getBooleanValue("pigeon.registry.group.fallback",
 			true);
-	
+
 	private static boolean enableLocalConfig = ConfigManagerLoader.getConfigManager().getBooleanValue(
 			"pigeon.registry.config.local", false);
 
@@ -151,8 +151,8 @@ public class RegistryManager {
 			}
 			if (!StringUtils.isBlank(addr)) {
 				if (logger.isDebugEnabled()) {
-					logger.debug("get service address from local properties, service name:" + serviceName + "  address:"
-							+ addr);
+					logger.debug("get service address from local properties, service name:" + serviceName
+							+ "  address:" + addr);
 				}
 				return addr;
 			}
@@ -257,8 +257,11 @@ public class RegistryManager {
 
 		Set<HostInfo> hostInfos = referencedServiceAddresses.get(serviceName);
 		if (hostInfos == null) {
-			hostInfos = new HashSet<HostInfo>();
-			referencedServiceAddresses.put(serviceName, hostInfos);
+			hostInfos = Collections.newSetFromMap(new ConcurrentHashMap<HostInfo, Boolean>());
+			Set<HostInfo> oldHostInfos = referencedServiceAddresses.putIfAbsent(serviceName, hostInfos);
+			if (oldHostInfos != null) {
+				hostInfos = oldHostInfos;
+			}
 		}
 		hostInfos.add(hostInfo);
 
@@ -276,7 +279,7 @@ public class RegistryManager {
 	public void removeServiceAddress(String serviceName, HostInfo hostInfo) {
 		Set<HostInfo> hostInfos = referencedServiceAddresses.get(serviceName);
 		if (hostInfos == null || !hostInfos.contains(hostInfo)) {
-			logger.warn("address:" + hostInfo + " is not in address list of service " + serviceName);
+			logger.info("address:" + hostInfo + " is not in address list of service " + serviceName);
 			return;
 		}
 		hostInfos.remove(hostInfo);
@@ -289,9 +292,12 @@ public class RegistryManager {
 	}
 
 	private boolean isAddressReferenced(HostInfo hostInfo) {
-		for (Set<HostInfo> hostInfos : referencedServiceAddresses.values()) {
-			if (hostInfos.contains(hostInfo))
+		for (String key : referencedServiceAddresses.keySet()) {
+			Set<HostInfo> hostInfos = referencedServiceAddresses.get(key);
+			if (hostInfos.contains(hostInfo)) {
+				logger.info("address:" + hostInfo + " still been referenced for service:" + key);
 				return true;
+			}
 		}
 		return false;
 	}
@@ -308,7 +314,7 @@ public class RegistryManager {
 		return referencedServiceAddresses;
 	}
 
-	public String getServerApp(String serverAddress) {
+	public String getReferencedApp(String serverAddress) {
 		HostInfo hostInfo = referencedAddresses.get(serverAddress);
 		String app = null;
 		if (hostInfo != null) {
@@ -320,6 +326,13 @@ public class RegistryManager {
 			return app;
 		}
 		return "";
+	}
+
+	public void setReferencedApp(String serverAddress, String app) {
+		HostInfo hostInfo = referencedAddresses.get(serverAddress);
+		if (hostInfo != null) {
+			hostInfo.setApp(app);
+		}
 	}
 
 	public void setServerApp(String serverAddress, String app) {
@@ -334,13 +347,20 @@ public class RegistryManager {
 		}
 	}
 
+	public void setReferencedVersion(String serverAddress, String version) {
+		HostInfo hostInfo = referencedAddresses.get(serverAddress);
+		if (hostInfo != null) {
+			hostInfo.setVersion(version);
+		}
+	}
+
 	public void setServerVersion(String serverAddress, String version) {
 		if (registry != null) {
 			registry.setServerVersion(serverAddress, version);
 		}
 	}
 
-	public String getServerVersion(String serverAddress) {
+	public String getReferencedVersion(String serverAddress) {
 		HostInfo hostInfo = referencedAddresses.get(serverAddress);
 		String version = null;
 		if (hostInfo != null) {
@@ -378,7 +398,7 @@ public class RegistryManager {
 			}
 		}
 	}
-	
+
 	/**
 	 * 
 	 * @author chenchongze
@@ -387,9 +407,16 @@ public class RegistryManager {
 	 * @param hosts
 	 */
 	public void setServerService(String serviceName, String group, String hosts) throws RegistryException {
-		if( registry != null) {
+		if (registry != null) {
 			registry.setServerService(serviceName, group, hosts);
 			monitor.logEvent("PigeonService.setHosts", serviceName, "swimlane=" + group + "&hosts=" + hosts);
+		}
+	}
+
+	public void delServerService(String serviceName, String group) throws RegistryException {
+		if (registry != null) {
+			registry.delServerService(serviceName, group);
+			monitor.logEvent("PigeonService.delService", serviceName, "swimlane=" + group);
 		}
 	}
 }

@@ -28,7 +28,7 @@ public abstract class AbstractLoadBalance implements LoadBalance {
 	private static final Logger logger = LoggerLoader.getLogger(AbstractLoadBalance.class);
 
 	protected Random random = new Random();
-
+	
 	private static final ConfigManager configManager = ConfigManagerLoader.getConfigManager();
 
 	@Override

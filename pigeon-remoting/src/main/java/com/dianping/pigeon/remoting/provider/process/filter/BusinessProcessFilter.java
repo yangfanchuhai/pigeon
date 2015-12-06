@@ -9,14 +9,14 @@ import java.util.List;
 import org.apache.logging.log4j.Logger;
 
 import com.dianping.pigeon.log.LoggerLoader;
+import com.dianping.pigeon.remoting.common.domain.InvocationContext.TimePhase;
+import com.dianping.pigeon.remoting.common.domain.InvocationContext.TimePoint;
 import com.dianping.pigeon.remoting.common.domain.InvocationRequest;
 import com.dianping.pigeon.remoting.common.domain.InvocationResponse;
 import com.dianping.pigeon.remoting.common.exception.InvalidParameterException;
 import com.dianping.pigeon.remoting.common.process.ServiceInvocationFilter;
 import com.dianping.pigeon.remoting.common.process.ServiceInvocationHandler;
 import com.dianping.pigeon.remoting.common.util.Constants;
-import com.dianping.pigeon.remoting.common.util.TimelineUtils;
-import com.dianping.pigeon.remoting.common.util.TimelineUtils.Phase;
 import com.dianping.pigeon.remoting.provider.domain.ProviderContext;
 import com.dianping.pigeon.remoting.provider.exception.RequestAbortedException;
 import com.dianping.pigeon.remoting.provider.process.ProviderProcessInterceptor;
@@ -57,18 +57,20 @@ public class BusinessProcessFilter implements ServiceInvocationFilter<ProviderCo
 				method = ServiceMethodFactory.getMethod(request);
 			}
 			if (Constants.REPLY_MANUAL && request.getCallType() == Constants.CALLTYPE_REPLY) {
-				request.setCallType(Constants.CALLTYPE_NOREPLY);
+				request.setCallType(Constants.CALLTYPE_MANUAL);
+			}
+			if (Constants.REPLY_MANUAL) {
 				ProviderHelper.setContext(invocationContext);
 			}
-			// TIMELINE_biz_start
-			if (TimelineUtils.isEnabled()) {
-				TimelineUtils.time(request, TimelineUtils.getRemoteIp(), Phase.BusinessStart);
+			invocationContext.getTimeline().add(new TimePoint(TimePhase.M, System.currentTimeMillis()));
+			Object returnObj = null;
+			try {
+				returnObj = method.invoke(request.getParameters());
+			} finally {
+				ProviderHelper.clearContext();
 			}
-			Object returnObj = method.invoke(request.getParameters());
-			if (TimelineUtils.isEnabled()) {
-				TimelineUtils.time(request, TimelineUtils.getRemoteIp(), Phase.BusinessEnd);
-			}
-			// TIMELINE_biz_end
+
+			invocationContext.getTimeline().add(new TimePoint(TimePhase.M, System.currentTimeMillis()));
 			if (request.getCallType() == Constants.CALLTYPE_REPLY) {
 				response = ProviderUtils.createSuccessResponse(request, returnObj);
 			}

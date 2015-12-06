@@ -11,9 +11,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import org.apache.commons.lang.StringUtils;
-
-import com.dianping.pigeon.log.LoggerLoader;
-
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.DisposableBean;
@@ -25,6 +22,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
 import com.dianping.pigeon.config.ConfigManagerLoader;
+import com.dianping.pigeon.log.LoggerLoader;
 import com.dianping.pigeon.remoting.ServiceFactory;
 import com.dianping.pigeon.remoting.common.util.Constants;
 import com.dianping.pigeon.remoting.common.util.ServiceConfigUtils;
@@ -35,6 +33,7 @@ import com.dianping.pigeon.remoting.provider.config.ProviderConfig;
 import com.dianping.pigeon.remoting.provider.config.ServerConfig;
 import com.dianping.pigeon.remoting.provider.config.annotation.Service;
 import com.dianping.pigeon.util.ClassUtils;
+import com.dianping.pigeon.util.LangUtils;
 
 public class AnnotationBean implements DisposableBean, BeanFactoryPostProcessor, BeanPostProcessor,
 		ApplicationContextAware {
@@ -93,6 +92,19 @@ public class AnnotationBean implements DisposableBean, BeanFactoryPostProcessor,
 		}
 	}
 
+	public int getDefaultPort(int port) {
+		if (port == 4040) {
+			try {
+				String app = ConfigManagerLoader.getConfigManager().getAppName();
+				if (StringUtils.isNotBlank(app)) {
+					return LangUtils.hash(app, 6000, 2000);
+				}
+			} catch (Throwable t) {
+			}
+		}
+		return port;
+	}
+
 	public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
 		if (!isMatchPackage(bean)) {
 			return bean;
@@ -123,7 +135,7 @@ public class AnnotationBean implements DisposableBean, BeanFactoryPostProcessor,
 			providerConfig.setActives(service.actives());
 
 			ServerConfig serverConfig = new ServerConfig();
-			serverConfig.setPort(service.port());
+			serverConfig.setPort(getDefaultPort(service.port()));
 			serverConfig.setGroup(service.group());
 			serverConfig.setAutoSelectPort(service.autoSelectPort());
 			providerConfig.setServerConfig(serverConfig);

@@ -28,5 +28,16 @@ public interface Monitor {
 
 	MonitorTransaction createTransaction(String name, String uri, Object invocationContext);
 
-	MonitorTransaction getCurrentTransaction();
+	MonitorTransaction getCurrentCallTransaction();
+
+	void setCurrentCallTransaction(MonitorTransaction transaction);
+
+	void clearCallTransaction();
+
+	MonitorTransaction getCurrentServiceTransaction();
+
+	void setCurrentServiceTransaction(MonitorTransaction transaction);
+
+	void clearServiceTransaction();
+
 }

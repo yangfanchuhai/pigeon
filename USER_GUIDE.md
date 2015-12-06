@@ -29,7 +29,7 @@ pom依赖定义：
 		<dependency>
 		<groupId>com.dianping</groupId>
 		<artifactId>pigeon</artifactId>
-		<version>2.6.0-SNAPSHOT</version>
+		<version>2.7.0-SNAPSHOT</version>
 		</dependency>
 
 pigeon在运行时可能会依赖以下jar包，如果有必要，需要应用自行加上以下jar(版本建议高于或等于以下基础版本)：
@@ -1088,4 +1088,13 @@ swimlane=tg
 swimlane代表tg这个泳道，对于pigeon来说，如果一个service的机器定义了swimlane为tg，那么这个机器只能是客户端同样为tg泳道的机器能够调用
 对于客户端来说，假设配置了泳道为tg，那么这个客户端机器调用远程服务时，会优先选择服务端泳道配置同样为tg的机器，如果tg泳道的机器不可用或不存在，才会调用其他未配置泳道的机器
 
+### QPS监控信息
+1、可以通过ip:4080/stats.json查看QPS信息
+appRequestsReceived下会显示requests-lastsecond代表服务收到的请求最近一秒的QPS
+appRequestsSent下会显示requests-lastsecond代表发出的请求最近一秒的QPS
 
+2、QPS信息输出到监控系统
+如果使用了cat监控系统，可以在cat的event里可以查看：
+客户端发送的QPS：pigeonCall.QPS
+服务端接收的QPS：pigeonService.QPS
+在cat上可以看到从0-59秒在每一分钟的QPS值

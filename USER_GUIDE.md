@@ -812,6 +812,10 @@ Callback类：
 			}
 		}
 		
+
+如果需要动态设置callback，比如在一个线程里发起多次服务调用请求，每次使用不同的callback，可以按照以下代码：
+InvokerHelper.setCallback(new ServiceCallback(){...});
+
 ### 配置客户端集群策略模式
 
 客户端配置cluster属性：
